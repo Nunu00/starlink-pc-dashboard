@@ -268,7 +268,8 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             self.send_json({
                 "dish": self.bridge.get_dish_status(),
                 "router": self.bridge.get_router_status(),
-                "history": self.bridge.get_dish_history()
+                "history": self.bridge.get_dish_history(),
+                "mock_mode": self.bridge.use_mock
             })
         elif self.path == "/api/live/obstruction_map":
             self.send_json(self.bridge.get_dish_obstruction_map())

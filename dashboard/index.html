@@ -1608,6 +1608,17 @@
                 const response = await fetch('/api/live/mock_toggle');
                 const result = await response.json();
                 logConsole(`Simulator toggled: ${result.mock_mode ? "Enabled" : "Disabled"}`);
+                
+                // Update local state and UI immediately
+                appState.mockBackend = result.mock_mode;
+                const btn = document.getElementById('mockToggleBtn');
+                if (result.mock_mode) {
+                    btn.textContent = "ON";
+                    btn.style.backgroundColor = "var(--status-green)";
+                } else {
+                    btn.textContent = "OFF";
+                    btn.style.backgroundColor = "var(--panel-bg)";
+                }
             } catch (err) {
                 logConsole("Error communicating with backend simulator toggle.", true);
             }
