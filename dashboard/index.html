@@ -1228,6 +1228,9 @@
                                     <td class="value" id="debugPoeVoltage">--</td>
                                 </tr>
                             </table>
+                            <div style="height: 180px; margin-top: 1.2rem; position: relative;">
+                                <canvas id="poeChart"></canvas>
+                            </div>
                         </div>
 
                         <!-- Configuration Card -->
@@ -1359,6 +1362,7 @@
         // Charts references
         let liveChartInstance = null;
         let speedtestChartInstance = null;
+        let poeChartInstance = null;
         let chartDataPoints = []; // for live latency/throughput scrolling
 
         // Initialization
@@ -1469,6 +1473,64 @@
                     scales: {
                         x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
                         y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#f8fafc' } }
+                    }
+                }
+            });
+
+            // PoE Power & Voltage Chart (Dual Y-Axis)
+            const poeCtx = document.getElementById('poeChart').getContext('2d');
+            poeChartInstance = new Chart(poeCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Power (W)',
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                            data: [],
+                            borderWidth: 2,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Voltage (V)',
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                            data: [],
+                            borderWidth: 2,
+                            fill: true,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            grid: { color: 'rgba(255,255,255,0.05)' }, 
+                            ticks: { color: '#94a3b8' } 
+                        },
+                        y: { 
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Power (W)', color: '#ef4444' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }, 
+                            ticks: { color: '#94a3b8' } 
+                        },
+                        y1: { 
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Voltage (V)', color: '#3b82f6' },
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: '#94a3b8' } 
+                        }
                     },
                     plugins: {
                         legend: { labels: { color: '#f8fafc' } }
@@ -1613,6 +1675,30 @@
             }
 
             liveChartInstance.update('none'); // silent update
+
+            // Update PoE Chart if we have poeStats
+            if (poeChartInstance) {
+                const routerData = getDeepField(appState.router, "wifi_get_status") || getDeepField(appState.router, "rawStatus");
+                const poeStats = routerData ? (getDeepField(routerData, "poe_stats") || getDeepField(routerData, "poeStats")) : null;
+                
+                if (poeStats) {
+                    const power = getDeepField(poeStats, "poe_power") || getDeepField(poeStats, "poePower") || 0;
+                    const vin = getDeepField(poeStats, "vsns_vin") || getDeepField(poeStats, "vsnsVin") || 0;
+                    
+                    if (power > 0 || vin > 0) {
+                        poeChartInstance.data.labels.push(timeLabel);
+                        poeChartInstance.data.datasets[0].data.push(power.toFixed(2));
+                        poeChartInstance.data.datasets[1].data.push(vin.toFixed(2));
+
+                        if (poeChartInstance.data.labels.length > 15) {
+                            poeChartInstance.data.labels.shift();
+                            poeChartInstance.data.datasets[0].data.shift();
+                            poeChartInstance.data.datasets[1].data.shift();
+                        }
+                        poeChartInstance.update('none');
+                    }
+                }
+            }
         }
 
         // Populate entire UI from current appState

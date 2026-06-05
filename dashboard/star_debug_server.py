@@ -165,7 +165,7 @@ class StarlinkBridge:
         status = {
             "dish_get_status": {
                 "device_info": {
-                    "id": "ut-mock-12345678",
+                    "id": "ut-****************",
                     "hardware_version": "rev3_proto2",
                     "software_version": "191e4dfa-d63a-46b1-a73b-9fa907733864.uterm.release",
                     "bootcount": mock_data["boot_count"],
@@ -206,11 +206,12 @@ class StarlinkBridge:
         return {"reachable": True, "data": status}
 
     def get_mock_router_status(self):
+        import random
         elapsed = int(time.time() - mock_data["uptime_start"])
         status = {
             "wifi_get_status": {
                 "device_info": {
-                    "id": "Router-mock-0000",
+                    "id": "Router-****************",
                     "hardware_version": "v2",
                     "software_version": "2024.12.0.mr32145",
                     "bootcount": 5
@@ -222,8 +223,13 @@ class StarlinkBridge:
                     "thermal_throttle": False,
                     "wan_eth_poor_connection": False
                 },
-                "ipv4_wan_address": "192.168.100.100",
+                "ipv4_wan_address": "100.89.XXX.XXX",
                 "captive_portal_enabled": False,
+                "poe_stats": {
+                    "poe_state": "POE_STATE_ON",
+                    "poe_power": 135.0 + random.uniform(-4.0, 4.0),
+                    "vsns_vin": 56.2 + random.uniform(-0.25, 0.25)
+                },
                 "clients": [
                     {"mac_address": "12:34:56:78:9a:bc", "ip_address": "192.168.1.50", "given_name": "PC-Vincenzo", "snr": 0.0, "iface": "ETH"},
                     {"mac_address": "fe:dc:ba:98:76:54", "ip_address": "192.168.1.102", "given_name": "Smartphone-User", "snr": 38.0, "iface": "RF_5GHZ"},
@@ -252,7 +258,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         # Suppress logging every static asset request to keep console readable
-        if "GET /api/" in args[0] or "POST /api/" in args[0]:
+        if args and isinstance(args[0], str) and ("GET /api/" in args[0] or "POST /api/" in args[0]):
             super().log_message(format, *args)
 
     def do_GET(self):

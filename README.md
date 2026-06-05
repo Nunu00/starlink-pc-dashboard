@@ -1,6 +1,6 @@
 # Starlink Debug PC Dashboard
 
-A beautiful, premium space-themed desktop web dashboard to monitor and control Starlink Dish and Router, built as a replica of the original `star-debug` mobile application.
+A premium space-themed desktop web dashboard to monitor and control Starlink Dish and Router, built as a replica of the original `star-debug` mobile application.
 
 This repository contains:
 1. **Frontend (`dashboard/index.html`)**: A lightweight, single-page web dashboard using Vanilla HTML, CSS, and JS (with Chart.js).
@@ -9,9 +9,16 @@ This repository contains:
 
 ---
 
-## ⚡ Vibe Coding Project
+## 📸 Screenshots
 
-This entire PC Web Dashboard was created and designed using **Vibe Coding** (collaboratively prompting and coding with the AI agent *Antigravity* from the Google DeepMind team). By replacing heavy native Flutter compiler dependencies with a clean, vector-rendered HTML5 Canvas and a lightweight Python bridge, we transformed the mobile app concept into a high-performance, holographic PC dashboard.
+### Dashboard Overview
+![Dashboard Overview](dashboard/screenshots/overview.png)
+
+### Router Details & Client List
+![Router Details](dashboard/screenshots/router_details.png)
+
+### Advanced Telemetry & 3D Dish Orientation
+![Advanced Telemetry](dashboard/screenshots/advanced_telemetry.png)
 
 ---
 
@@ -48,6 +55,12 @@ python dashboard/star_debug_server.py
 ```bash
 python dashboard/star_debug_server.py --mock
 ```
+
+---
+
+## ⚡ Vibe Coding
+
+Developed via Vibe Coding.
 
 ---
 
