@@ -1573,7 +1573,7 @@
                 appState.history = (status.history && status.history.reachable) ? status.history.data : null;
 
                 // Check mock state from headers or response payload (toggled by button)
-                if (status.dish.reachable && status.dish.data.dish_get_status?.device_info?.id?.includes("mock")) {
+                if (status.mock_mode) {
                     appState.mockBackend = true;
                     document.getElementById('mockToggleBtn').textContent = "ON";
                     document.getElementById('mockToggleBtn').style.backgroundColor = "var(--status-green)";
