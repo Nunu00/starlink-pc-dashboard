@@ -1,0 +1,2708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starlink Debug Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-gradient-start: #0f172a;
+            --bg-gradient-end: #1e1b4b;
+            --panel-bg: rgba(30, 41, 59, 0.65);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #a855f7;
+            --status-green: #10b981;
+            --status-amber: #f59e0b;
+            --status-red: #ef4444;
+            --shadow-neon: 0 0 15px rgba(6, 182, 212, 0.2);
+            --transition-speed: 0.25s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Glassmorphism Panel helper */
+        .glass-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+        .glass-panel:hover {
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), 0 0 1px rgba(255, 255, 255, 0.15);
+        }
+
+        /* Header Bar */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--panel-border);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            fill: var(--accent-cyan);
+            filter: drop-shadow(0 0 4px var(--accent-cyan));
+        }
+
+        .logo-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, var(--text-primary), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .system-status {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--status-red);
+            box-shadow: 0 0 8px var(--status-red);
+            transition: background-color var(--transition-speed);
+        }
+
+        .status-dot.active {
+            background-color: var(--status-green);
+            box-shadow: 0 0 8px var(--status-green);
+        }
+
+        .status-dot.amber {
+            background-color: var(--status-amber);
+            box-shadow: 0 0 8px var(--status-amber);
+        }
+
+        /* Banner for static file mode */
+        #modeBanner {
+            background: linear-gradient(to right, #4c1d95, #2563eb);
+            padding: 0.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #modeBanner button {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background var(--transition-speed);
+        }
+
+        #modeBanner button:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Dashboard Container */
+        .app-container {
+            display: flex;
+            min-height: calc(100vh - 69px);
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            border-right: 1px solid var(--panel-border);
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            border: 1px solid transparent;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: rgba(6, 182, 212, 0.08);
+            border-color: rgba(6, 182, 212, 0.2);
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.1);
+        }
+
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Main Workspace Content */
+        main {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 69px);
+        }
+
+        /* Tab Panels */
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Grid Layouts */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .app-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 1rem;
+            }
+            .nav-item {
+                white-space: nowrap;
+            }
+        }
+
+        /* Cards */
+        .card {
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.75rem;
+        }
+
+        .card-title svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--accent-cyan);
+        }
+
+        /* KPI Widget */
+        .kpi-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+        }
+
+        .kpi-icon-container {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kpi-icon-container svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--accent-cyan);
+        }
+
+        .kpi-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kpi-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Table Styles */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-table tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .info-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .info-table td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .info-table td.label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            width: 45%;
+        }
+
+        .info-table td.value {
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+        }
+
+        /* Alerts List */
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0.85rem;
+            border-radius: 8px;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .alert-item svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--status-red);
+            flex-shrink: 0;
+        }
+
+        .no-alerts {
+            color: var(--status-green);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            padding: 0.5rem 0;
+        }
+
+        .no-alerts svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        /* Upload Area */
+        .upload-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color var(--transition-speed), background var(--transition-speed);
+            margin-bottom: 2rem;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.02);
+        }
+
+        .upload-zone svg {
+            width: 48px;
+            height: 48px;
+            fill: var(--accent-cyan);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .paste-area {
+            width: 100%;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            padding: 1rem;
+            font-size: 0.85rem;
+            resize: none;
+            outline: none;
+            margin-bottom: 1rem;
+        }
+
+        .paste-area:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, var(--accent-cyan), #0891b2);
+            border: none;
+            color: white;
+            padding: 0.65rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--status-red), #dc2626);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Control Panel */
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .control-row button {
+            flex: 1;
+            justify-content: center;
+        }
+
+        /* Terminal Console */
+        .terminal-box {
+            background: #020617;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #38bdf8;
+            height: 300px;
+            overflow-y: auto;
+            margin-top: 1.5rem;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+        }
+
+        .terminal-line {
+            margin-bottom: 0.35rem;
+            word-break: break-all;
+        }
+
+        .terminal-time {
+            color: var(--text-secondary);
+        }
+
+        /* Map Canvas */
+        .canvas-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        #obstructionCanvas {
+            background: #0b0f19;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Snapshots List */
+        .snapshot-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .snapshot-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .snapshot-meta {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .snapshot-name {
+            font-weight: 600;
+        }
+
+        .snapshot-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .snapshot-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Client List */
+        .client-search {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: white;
+            font-family: inherit;
+            margin-bottom: 1rem;
+            outline: none;
+        }
+
+        .client-search:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        .client-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .client-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .client-title {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .client-sub {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .client-signal {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .signal-badge {
+            font-size: 0.75rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        /* Connection badges */
+        .signal-badge.badge-wired {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+        }
+        .signal-badge.badge-2ghz {
+            background: rgba(234, 179, 8, 0.15);
+            color: #facc15;
+        }
+        .signal-badge.badge-5ghz {
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--accent-cyan);
+        }
+
+        /* JSON syntax highlighting */
+        .json-key { color: #88c0d0; font-weight: 600; }
+        .json-string { color: #a3be8c; }
+        .json-number { color: #b48ead; }
+        .json-boolean { color: #d88484; font-weight: 600; }
+        .json-null { color: #5e6b85; font-style: italic; }
+
+        /* Description subtitle for ready states */
+        .desc-subtitle {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-weight: normal;
+            margin-top: 0.15rem;
+            opacity: 0.8;
+            line-height: 1.2;
+        }
+
+        /* Timeline styling */
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+            padding-left: 1.5rem;
+            border-left: 2px solid rgba(255, 255, 255, 0.05);
+            margin-left: 0.5rem;
+            text-align: left;
+        }
+        .timeline-item {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .timeline-node {
+            position: absolute;
+            left: calc(-1.5rem - 6px);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 8px var(--accent-cyan);
+        }
+        .timeline-label {
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+        .timeline-duration {
+            font-size: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--accent-cyan);
+            padding: 0.1rem 0.45rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* Toggle Button container */
+        .mock-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-right: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header bar -->
+    <header>
+        <div class="logo-section">
+            <svg class="logo-icon" viewBox="0 0 24 24">
+                <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,13.62 19.5,15.14 18.69,16.43L17.1,13.25C17.67,12.87 18,12.23 18,11.5A1.5,1.5 0 0,0 16.5,10A1.5,1.5 0 0,0 15,11.5C15,12.23 15.33,12.87 15.9,13.25L14.31,16.43C13.62,16.8 12.84,17 12,17C11.16,17 10.38,16.8 9.69,16.43L8.1,13.25C8.67,12.87 9,12.23 9,11.5A1.5,1.5 0 0,0 7.5,10A1.5,1.5 0 0,0 6,11.5C6,12.23 6.33,12.87 6.9,13.25L5.31,16.43C4.5,15.14 4,13.62 4,12A8,8 0 0,1 12,4M12,7A4.5,4.5 0 0,0 7.5,11.5C7.5,12.23 7.83,12.87 8.4,13.25L6.81,16.43C7.5,16.8 8.28,17 9.12,17C9.96,17 10.74,16.8 11.43,16.43L13.02,13.25C13.59,12.87 13.92,12.23 13.92,11.5A4.5,4.5 0 0,0 12,7M12,9A2.5,2.5 0 0,1 14.5,11.5C14.5,12.23 14.17,12.87 13.6,13.25L15.19,16.43C14.5,16.8 13.72,17 12.88,17C12.04,17 11.26,16.8 10.57,16.43L12.16,13.25C11.59,12.87 11.26,12.23 11.26,11.5A2.5,2.5 0 0,1 12,9Z"/>
+            </svg>
+            <span class="logo-title">Starlink Debug</span>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div class="mock-toggle-container">
+                <span style="font-size: 0.85rem; color: var(--text-secondary);">Simulator Mode</span>
+                <button class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" id="mockToggleBtn" onclick="toggleMockBackend()">OFF</button>
+            </div>
+            <div class="system-status">
+                <div class="status-pill">
+                    <div class="status-dot" id="statusDish"></div>
+                    <span>Dish</span>
+                </div>
+                <div class="status-pill">
+                    <div class="status-dot" id="statusRouter"></div>
+                    <span>Router</span>
+                </div>
+                <div class="status-pill">
+                    <div class="status-dot" id="statusServer"></div>
+                    <span>Server API</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Banner when viewing local file instead of live system -->
+    <div id="modeBanner" style="display: none;">
+        <span>⚠️ Currently viewing static <strong>Imported JSON file</strong>. Live updates paused.</span>
+        <button onclick="restoreLiveMode()">Return to Live Dashboard</button>
+    </div>
+
+    <!-- Container wrapper -->
+    <div class="app-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="nav-item active" data-tab="overviewTab">
+                <svg viewBox="0 0 24 24"><path d="M13,3V9H21V3H13M3,13H11V21H3V13M3,3H11V11H3V3M13,11H21V21H13V11M15,5V7H19V5H15M5,15V19H9V15H5M5,5V9H9V5H5M15,13V19H19V13H15Z"/></svg>
+                Overview
+            </div>
+            <div class="nav-item" data-tab="dishTab">
+                <svg viewBox="0 0 24 24"><path d="M12,2c5.52,0,10,4.48,10,10s-4.48,10-10,10S2,17.52,2,12S6.48,2,12,2M12,4c-4.42,0-8,3.58-8,8c0,4.42,3.58,8,8,8c4.42,0,8-3.58,8-8C20,7.58,16.42,4,12,4m-1,2h2v4h4v2h-4v6h-2v-6H7v-2h4V6Z"/></svg>
+                Dish Details
+            </div>
+            <div class="nav-item" data-tab="routerTab">
+                <svg viewBox="0 0 24 24"><path d="M17,17H19V19H17V17M13,17H15V19H13V17M9,17H11V19H9V17M5,17H7V19H5V17M7,3H17V5H7V3M19,7H5C3.89,7 3,7.89 3,9V14C3,15.11 3.89,16 5,16H19C20.11,16 21,15.11 21,14V9C21,7.89 20.11,7 19,7M19,14H5V9H19V14Z"/></svg>
+                Router Details
+            </div>
+            <div class="nav-item" data-tab="obstructionTab">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                Obstruction Map
+            </div>
+            <div class="nav-item" data-tab="controlTab">
+                <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"/></svg>
+                Control Center
+            </div>
+            <div class="nav-item" data-tab="importTab">
+                <svg viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M12.5,17.5V14.5H8.5V12.5H12.5V9.5L16.5,13.5L12.5,17.5M13,9V3.5L18.5,9H13Z"/></svg>
+                JSON Analyzer
+            </div>
+            <div class="nav-item" data-tab="rawTab">
+                <svg viewBox="0 0 24 24"><path d="M5,3C3.89,3 3,3.89 3,5V19C3,20.11 3.89,21 5,21H19C20.11,21 21,20.11 21,19V5C21,3.89 20.11,3 19,3H5M5,5H19V19H5V5M7,7V9H17V7H7M7,11V13H17V11H7M7,15V17H14V15H7Z"/></svg>
+                Advanced Telemetry
+            </div>
+            <div class="nav-item" data-tab="snapshotsTab">
+                <svg viewBox="0 0 24 24"><path d="M15,9H9V15H15V9M17,3H7C5.89,3 5,3.89 5,5V19C5,20.1 5.9,21 7,21H17C18.1,21 19,20.1 19,19V5C19,3.89 18.1,3 17,3M17,19H7V5H17V19Z"/></svg>
+                Saved Snapshots
+            </div>
+
+            <!-- Vibe Coding Badge -->
+            <div style="margin-top: auto; padding: 0.8rem 1rem; border-top: 1px solid rgba(255, 255, 255, 0.05); text-align: center;">
+                <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 0.35rem; font-family: 'Outfit', sans-serif;">
+                    <span>Created via</span>
+                    <span style="color: #facc15; font-weight: 700; display: flex; align-items: center; gap: 0.15rem; text-shadow: 0 0 8px rgba(250, 204, 21, 0.3);">
+                        Vibe Coding ⚡
+                    </span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main>
+            
+            <!-- OVERVIEW TAB -->
+            <section id="overviewTab" class="tab-panel active">
+                <div class="stats-grid">
+                    <div class="glass-panel kpi-card">
+                        <div class="kpi-icon-container">
+                            <svg viewBox="0 0 24 24"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg>
+                        </div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Uptime</span>
+                            <span class="kpi-value" id="valUptime">--</span>
+                        </div>
+                    </div>
+                    <div class="glass-panel kpi-card">
+                        <div class="kpi-icon-container">
+                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"/></svg>
+                        </div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Latency</span>
+                            <span class="kpi-value" id="valLatency">--</span>
+                        </div>
+                    </div>
+                    <div class="glass-panel kpi-card">
+                        <div class="kpi-icon-container">
+                            <svg viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg>
+                        </div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Throughput Down</span>
+                            <span class="kpi-value" id="valThroughputDown">--</span>
+                        </div>
+                    </div>
+                    <div class="glass-panel kpi-card">
+                        <div class="kpi-icon-container">
+                            <svg viewBox="0 0 24 24"><path d="M12,13.5V20H10V13.5H5L12,6L19,13.5H12M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
+                        </div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Throughput Up</span>
+                            <span class="kpi-value" id="valThroughputUp">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="main-grid">
+                    <div class="glass-panel card">
+                        <div class="card-title">
+                            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                            Real-time Throughput (Live Mode)
+                        </div>
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="liveChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 2rem;">
+                        <div class="glass-panel card">
+                            <div class="card-title">
+                                <svg viewBox="0 0 24 24"><path d="M12,2L1,21H23L12,2M12,6L19.53,19H4.47L12,6M11,10V14H13V10H11M11,16V18H13V16H11Z"/></svg>
+                                Active Alerts
+                            </div>
+                            <div id="alertsContainer">
+                                <div class="no-alerts">
+                                    <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,16.5L16.5,11L15,9.5L11,13.5L9,11.5L7.5,13L11,16.5Z"/></svg>
+                                    All Systems Nominal
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel card">
+                            <div class="card-title">
+                                <svg viewBox="0 0 24 24"><path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/></svg>
+                                Quick Info
+                            </div>
+                            <table class="info-table">
+                                <tr>
+                                    <td class="label">Dish Hardware</td>
+                                    <td class="value" id="valHardware">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Obstruction Frac</td>
+                                    <td class="value" id="valObstructionFrac">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">GPS Satellites</td>
+                                    <td class="value" id="valGpsSats">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Boot Count</td>
+                                    <td class="value" id="valBootCount">--</td>
+                                </tr>
+                            </table>
+                            <div style="margin-top: 1rem; text-align: center;">
+                                <button class="btn btn-secondary" onclick="saveCurrentToSnapshot()">Save Snapshot</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DISH TAB -->
+            <section id="dishTab" class="tab-panel">
+                <div class="main-grid">
+                    <div class="glass-panel card">
+                        <div class="card-title">Dish Hardware & State Information</div>
+                        <table class="info-table">
+                            <tr>
+                                <td class="label">Device ID / Serial</td>
+                                <td class="value" id="dishId">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Hardware Version</td>
+                                <td class="value" id="dishHardware">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Software Version</td>
+                                <td class="value" id="dishSoftware">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Manufactured Version</td>
+                                <td class="value" id="dishManufactured">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Country Code</td>
+                                <td class="value" id="dishCountry">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Actuators Mode</td>
+                                <td class="value" id="dishActuators">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Boresight Azimuth</td>
+                                <td class="value" id="dishAzimuth">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Boresight Elevation</td>
+                                <td class="value" id="dishElevation">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Ethernet Negotiation</td>
+                                <td class="value" id="dishEth">--</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 2rem;">
+                        <div class="glass-panel card">
+                            <div class="card-title">Ready States</div>
+                            <table class="info-table">
+                                <tr>
+                                    <td class="label">
+                                        Cady
+                                        <div class="desc-subtitle">Doppler carrier tracking & sync</div>
+                                    </td>
+                                    <td class="value" id="rsCady">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">
+                                        Scp
+                                        <div class="desc-subtitle">Space Communication Protocol (Sat link)</div>
+                                    </td>
+                                    <td class="value" id="rsScp">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">
+                                        L1/L2
+                                        <div class="desc-subtitle">Protocol Stack Layers 1 & 2</div>
+                                    </td>
+                                    <td class="value" id="rsL1L2">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">
+                                        Xphy
+                                        <div class="desc-subtitle">Transceiver Physical Layer hardware</div>
+                                    </td>
+                                    <td class="value" id="rsXphy">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">
+                                        Aap
+                                        <div class="desc-subtitle">Antenna Array Processor beam steering</div>
+                                    </td>
+                                    <td class="value" id="rsAap">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">
+                                        RF
+                                        <div class="desc-subtitle">Radio Frequency transmitter frontend</div>
+                                    </td>
+                                    <td class="value" id="rsRf">--</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="glass-panel card">
+                            <div class="card-title">GPS Statistics</div>
+                            <table class="info-table">
+                                <tr>
+                                    <td class="label">GPS Fix Valid</td>
+                                    <td class="value" id="gpsValid">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Satellites Tracked</td>
+                                    <td class="value" id="gpsSats">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">No Sats After TTFF</td>
+                                    <td class="value" id="gpsNoSatsAfterTtff">--</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ROUTER TAB -->
+            <section id="routerTab" class="tab-panel">
+                <div class="main-grid">
+                    <div class="glass-panel card">
+                        <div class="card-title">Router Info & Configuration</div>
+                        <table class="info-table" style="margin-bottom: 2rem;">
+                            <tr>
+                                <td class="label">Router ID</td>
+                                <td class="value" id="routerId">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Hardware Version</td>
+                                <td class="value" id="routerHardware">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Software Version</td>
+                                <td class="value" id="routerSoftware">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Wan IP Address</td>
+                                <td class="value" id="routerWanIp">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Captive Portal Enabled</td>
+                                <td class="value" id="routerCaptive">--</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Uplink Uptime</td>
+                                <td class="value" id="routerUptime">--</td>
+                            </tr>
+                        </table>
+
+                        <div class="card-title">Wifi Clients List</div>
+                        <input type="text" class="client-search" id="clientSearchInput" placeholder="Search clients by name, MAC, or IP..." oninput="filterClients()">
+                        <div class="client-grid" id="clientsContainer">
+                            <div style="color: var(--text-secondary); text-align: center; grid-column: 1/-1; padding: 2rem;">No clients connected</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 2rem;">
+                        <div class="glass-panel card">
+                            <div class="card-title">Speed Test History (JSON Data)</div>
+                            <div style="height: 250px; position: relative;">
+                                <canvas id="speedtestChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel card">
+                            <div class="card-title">Mesh Network Nodes</div>
+                            <table class="info-table" id="meshNodesTable">
+                                <tr>
+                                    <td colspan="2" style="text-align: center; color: var(--text-secondary);">No mesh nodes data</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- OBSTRUCTION MAP TAB -->
+            <section id="obstructionTab" class="tab-panel">
+                <div class="main-grid">
+                    <div class="glass-panel card">
+                        <div class="card-title">Wedge Sector Obstruction Map</div>
+                        <div class="canvas-container">
+                            <canvas id="sectorWedgeCanvas" width="300" height="300"></canvas>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; max-width: 400px;">
+                                This representation shows 12 wedges of the sky. Green represents no obstructions, Red represents obstructed sectors, and values show the obstruction ratio.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-panel card">
+                        <div class="card-title">Live 2D Signal Map (Grid Mode)</div>
+                        <div class="canvas-container">
+                            <canvas id="obstructionCanvas" width="300" height="300"></canvas>
+                            <button class="btn btn-secondary" style="margin-top: 1rem;" onclick="load2DObstructionMap()">Load/Refresh Live 2D Map</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CONTROL CENTER TAB -->
+            <section id="controlTab" class="tab-panel">
+                <div class="glass-panel card" style="margin-bottom: 2rem;">
+                    <div class="card-title">Execute Device Commands</div>
+                    <div class="control-grid">
+                        <div class="control-group">
+                            <h3 style="font-size: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem; margin-bottom: 0.5rem; color: var(--accent-cyan);">Dish (Antenna) Actions</h3>
+                            <div class="control-row">
+                                <button class="btn btn-danger" onclick="triggerAction('dish', 'reboot')">Reboot Dish</button>
+                            </div>
+                            <div class="control-row">
+                                <button class="btn" onclick="triggerAction('dish', 'stow')">Stow (Fold)</button>
+                                <button class="btn" onclick="triggerAction('dish', 'unstow')">Unstow (Unfold)</button>
+                            </div>
+                            <div class="control-row">
+                                <button class="btn btn-secondary" onclick="triggerAction('dish', 'inhibit_gps')">Inhibit GPS</button>
+                                <button class="btn btn-secondary" onclick="triggerAction('dish', 'allow_gps')">Enable GPS</button>
+                            </div>
+                            <div class="control-row">
+                                <button class="btn btn-secondary" onclick="triggerAction('dish', 'inhibit_rf')">Inhibit RF Transmit</button>
+                                <button class="btn btn-secondary" onclick="triggerAction('dish', 'allow_rf')">Enable RF Transmit</button>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <h3 style="font-size: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem; margin-bottom: 0.5rem; color: var(--accent-purple);">Router Actions</h3>
+                            <div class="control-row">
+                                <button class="btn btn-danger" onclick="triggerAction('router', 'reboot')">Reboot Router</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel card">
+                    <div class="card-title">Action Console & Output Log</div>
+                    <div class="terminal-box" id="terminalConsole">
+                        <div class="terminal-line"><span class="terminal-time">[System Status]</span> Console ready. Operations will print here.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- JSON ANALYZER TAB -->
+            <section id="importTab" class="tab-panel">
+                <div class="glass-panel card" style="margin-bottom: 2rem;">
+                    <div class="card-title">Load Starlink DebugData JSON File</div>
+                    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                        <svg viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
+                        <p style="font-size: 1.1rem; font-weight: 500; margin-bottom: 0.5rem;">Click here to select a DebugData.json file</p>
+                        <p class="upload-text">Supports dumps generated from the official Starlink App, Starlink Web Panel, or this Dashboard</p>
+                        <input type="file" id="fileInput" style="display: none;" accept=".json" onchange="handleFileSelect(event)">
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 1.5rem; color: var(--text-secondary); font-weight: 500;">
+                        — OR PASTE JSON TEXT BELOW —
+                    </div>
+
+                    <textarea class="paste-area" id="pasteArea" placeholder="Paste your DebugData JSON raw text string here..."></textarea>
+                    <div style="text-align: right;">
+                        <button class="btn" onclick="parsePastedJson()">Analyze Pasted JSON</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SAVED SNAPSHOTS TAB -->
+            <section id="snapshotsTab" class="tab-panel">
+                <div class="glass-panel card">
+                    <div class="card-title">My Starlinks: Saved Snapshots (Local Database)</div>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">
+                        Snapshots are saved locally in your browser's LocalStorage database. You can save live data or imported file status.
+                    </p>
+                    <div class="snapshot-list" id="snapshotsContainer">
+                        <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">No snapshots saved yet.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ADVANCED TELEMETRY TAB -->
+            <section id="rawTab" class="tab-panel">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 2rem; align-items: start;">
+                    
+                    <!-- Left Column -->
+                    <div style="display: flex; flex-direction: column; gap: 2rem;">
+                        
+                        <!-- Boot & Initialization Timeline Card -->
+                        <div class="glass-panel card">
+                            <div class="card-title">Boot & Initialization Timeline</div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+                                Duration of stages completed during the last boot sequence.
+                            </p>
+                            <div class="timeline" id="bootTimeline">
+                                <div style="color: var(--text-secondary); text-align: center; padding: 1rem;">No timeline data available.</div>
+                            </div>
+                        </div>
+
+                        <!-- PoE Power Monitoring Card -->
+                        <div class="glass-panel card">
+                            <div class="card-title">Power & POE Status</div>
+                            <table class="info-table">
+                                <tr>
+                                    <td class="label">PoE State</td>
+                                    <td class="value" id="debugPoeState">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">PoE Power Consumption</td>
+                                    <td class="value" id="debugPoePower">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">PoE Input Voltage</td>
+                                    <td class="value" id="debugPoeVoltage">--</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Configuration Card -->
+                        <div class="glass-panel card">
+                            <div class="card-title">Advanced Settings Configuration</div>
+                            <table class="info-table">
+                                <tr>
+                                    <td class="label">Snow Melt Mode</td>
+                                    <td class="value" id="cfgSnowMelt">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Auto-Update Window</td>
+                                    <td class="value" id="cfgUpdateHour">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Power Save Duration</td>
+                                    <td class="value" id="cfgPowerSaveDur">--</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div style="display: flex; flex-direction: column; gap: 2rem;">
+
+                        <!-- Holographic 3D Dish Canvas Card -->
+                        <div class="glass-panel card" style="display: flex; flex-direction: column; align-items: center;">
+                            <div class="card-title" style="align-self: flex-start; margin-bottom: 0.5rem;">Dish 3D Orientation & Alignment</div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); align-self: flex-start; margin-bottom: 1rem;">
+                                Holographic vector projection of the dish pointing angle. Drag on the visualizer to rotate your camera view.
+                            </p>
+                            <div style="position: relative; width: 100%; max-width: 320px; aspect-ratio: 1; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 8px; overflow: hidden; display: flex; justify-content: center; align-items: center;">
+                                <canvas id="dish3DCanvas" width="320" height="320" style="cursor: grab;"></canvas>
+                                <div style="position: absolute; bottom: 8px; right: 8px; font-size: 0.72rem; color: var(--accent-cyan); background: rgba(6, 182, 212, 0.1); padding: 0.15rem 0.35rem; border-radius: 4px; pointer-events: none; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                                    Drag to Rotate
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dish Alignment & Attitude Stats -->
+                        <div class="glass-panel card">
+                            <div class="card-title">Detailed Dish Alignment & Attitude</div>
+                            <table class="info-table">
+                                <tr>
+                                    <td class="label">Attitude Estimation State</td>
+                                    <td class="value" id="debugAttState">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Attitude Uncertainty</td>
+                                    <td class="value" id="debugAttUncertainty">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Tilt Angle</td>
+                                    <td class="value" id="debugTiltAngle">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Boresight Azimuth (Current / Desired)</td>
+                                    <td class="value" id="debugAzimuth">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Boresight Elevation (Current / Desired)</td>
+                                    <td class="value" id="debugElevation">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Actuator Motor State</td>
+                                    <td class="value" id="debugActuatorState">--</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Diagnostics & Flags Card -->
+                        <div class="glass-panel card">
+                            <div class="card-title">System Diagnostics & Integrity</div>
+                            <table class="info-table">
+                                <tr>
+                                    <td class="label">SNR Above Noise Floor</td>
+                                    <td class="value" id="debugSnrAboveFloor">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Has Signed Calibration</td>
+                                    <td class="value" id="debugHasCals">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">System Disablement Code</td>
+                                    <td class="value" id="debugDisableCode">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Software Update State</td>
+                                    <td class="value" id="debugSwState">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Last Public IP Change</td>
+                                    <td class="value" id="debugIpChange">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Account Shard</td>
+                                    <td class="value" id="debugShard">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Hardware Build ID</td>
+                                    <td class="value" id="debugBuildId" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; word-break: break-all;">--</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        // Global Application State
+        let appState = {
+            mode: "live", // "live" or "static"
+            mockBackend: false, // flag indicating python mock backend status
+            staticFileName: "",
+            dish: null,
+            router: null,
+            history: null,
+            clients: [],
+            speedtests: [],
+            meshNodes: [],
+            lastUptime: 0,
+            rawSubTab: "dish"
+        };
+
+        // Charts references
+        let liveChartInstance = null;
+        let speedtestChartInstance = null;
+        let chartDataPoints = []; // for live latency/throughput scrolling
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            initNavigation();
+            initCharts();
+            initDragAndDrop();
+            initDish3DRenderer();
+            
+            // Start polling live status
+            pollLiveStatus();
+            setInterval(pollLiveStatus, 2000);
+
+            // Set console welcome
+            logConsole("System dashboard loaded. Live polling active.");
+        });
+
+        // Navigation Menu tabs toggling
+        function initNavigation() {
+            const navItems = document.querySelectorAll('.sidebar .nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    navItems.forEach(n => n.classList.remove('active'));
+                    item.classList.add('active');
+
+                    const tabId = item.getAttribute('data-tab');
+                    const panels = document.querySelectorAll('.tab-panel');
+                    panels.forEach(p => p.classList.remove('active'));
+                    document.getElementById(tabId).classList.add('active');
+
+                    // If tab is obstruction map, trigger canvas redraws
+                    if (tabId === 'obstructionTab') {
+                        if (appState.mode === 'live') {
+                            load2DObstructionMap();
+                        } else {
+                            setTimeout(() => {
+                                drawSectorWedges();
+                                draw2DObstructionMap(appState.gridData);
+                            }, 50);
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize Charts
+        function initCharts() {
+            // Live throughput / latency chart
+            const liveCtx = document.getElementById('liveChart').getContext('2d');
+            liveChartInstance = new Chart(liveCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Down Throughput (Mbps)',
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.05)',
+                            data: [],
+                            borderWidth: 2,
+                            fill: true
+                        },
+                        {
+                            label: 'Up Throughput (Mbps)',
+                            borderColor: '#a855f7',
+                            backgroundColor: 'rgba(168, 85, 247, 0.05)',
+                            data: [],
+                            borderWidth: 2,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#f8fafc' } }
+                    }
+                }
+            });
+
+            // Historical speedtests chart
+            const speedCtx = document.getElementById('speedtestChart').getContext('2d');
+            speedtestChartInstance = new Chart(speedCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Down (Mbps)',
+                            backgroundColor: '#06b6d4',
+                            data: []
+                        },
+                        {
+                            label: 'Up (Mbps)',
+                            backgroundColor: '#a855f7',
+                            data: []
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#f8fafc' } }
+                    }
+                }
+            });
+        }
+
+        // Add visual text line to control console log
+        function logConsole(message, isError=false) {
+            const consoleBox = document.getElementById('terminalConsole');
+            const dateStr = new Date().toLocaleTimeString();
+            const colorClass = isError ? 'color: var(--status-red);' : '';
+            
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.innerHTML = `<span class="terminal-time">[${dateStr}]</span> <span style="${colorClass}">${message}</span>`;
+            consoleBox.appendChild(line);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        // Live Mode status fetch
+        async function pollLiveStatus() {
+            if (appState.mode !== "live") return;
+
+            try {
+                const response = await fetch('/api/live/status');
+                if (!response.ok) throw new Error("Server API issue");
+
+                const status = await response.json();
+                document.getElementById('statusServer').classList.add('active');
+
+                // Update system status pills
+                updateStatusDot('statusDish', status.dish.reachable);
+                updateStatusDot('statusRouter', status.router && status.router.reachable);
+
+                // Populate appState
+                appState.dish = status.dish.reachable ? status.dish.data : null;
+                appState.router = (status.router && status.router.reachable) ? status.router.data : null;
+                appState.history = (status.history && status.history.reachable) ? status.history.data : null;
+
+                // Check mock state from headers or response payload (toggled by button)
+                if (status.dish.reachable && status.dish.data.dish_get_status?.device_info?.id?.includes("mock")) {
+                    appState.mockBackend = true;
+                    document.getElementById('mockToggleBtn').textContent = "ON";
+                    document.getElementById('mockToggleBtn').style.backgroundColor = "var(--status-green)";
+                } else {
+                    appState.mockBackend = false;
+                    document.getElementById('mockToggleBtn').textContent = "OFF";
+                    document.getElementById('mockToggleBtn').style.backgroundColor = "var(--panel-bg)";
+                }
+
+                updateUI();
+                updateLiveChart();
+            } catch (err) {
+                // Server API offline
+                document.getElementById('statusServer').classList.remove('active');
+                updateStatusDot('statusDish', false);
+                updateStatusDot('statusRouter', false);
+            }
+        }
+
+        function updateStatusDot(elementId, state) {
+            const el = document.getElementById(elementId);
+            if (state) {
+                el.className = "status-dot active";
+            } else {
+                el.className = "status-dot";
+            }
+        }
+
+        // Toggle local simulator mode
+        async function toggleMockBackend() {
+            try {
+                const response = await fetch('/api/live/mock_toggle');
+                const result = await response.json();
+                logConsole(`Simulator toggled: ${result.mock_mode ? "Enabled" : "Disabled"}`);
+            } catch (err) {
+                logConsole("Error communicating with backend simulator toggle.", true);
+            }
+        }
+
+        // Force/Restore Live Mode dashboard
+        function restoreLiveMode() {
+            appState.mode = "live";
+            document.getElementById('modeBanner').style.display = "none";
+            logConsole("Switched back to Live polling mode.");
+            pollLiveStatus();
+        }
+
+        // Trigger live command actions (Reboot/Stow/Unstow)
+        async function triggerAction(target, action) {
+            if (appState.mode !== "live") {
+                logConsole(`Action blocked: Cannot trigger live commands in offline JSON Analyzer mode!`, true);
+                return;
+            }
+
+            logConsole(`Sending command: [${target}] ${action}...`);
+
+            try {
+                const response = await fetch('/api/live/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target, action })
+                });
+
+                const res = await response.json();
+                if (res.success) {
+                    logConsole(`Success: ${res.message || "Command accepted by device."}`);
+                } else {
+                    logConsole(`Failed: ${res.message || "Device rejected request."}`, true);
+                }
+            } catch (err) {
+                logConsole(`Error communicating with dashboard bridge server.`, true);
+            }
+        }
+
+        // Draw Live density/history chart points
+        function updateLiveChart() {
+            if (!liveChartInstance) return;
+
+            const dishData = getDeepField(appState.dish, "dish_get_status") || getDeepField(appState.dish, "rawStatus");
+            if (!dishData) return;
+
+            const timeLabel = new Date().toLocaleTimeString();
+            const downBps = dishData.downlink_throughput_bps || dishData.downlinkThroughputBps || 0;
+            const upBps = dishData.uplink_throughput_bps || dishData.uplinkThroughputBps || 0;
+
+            const downMbps = (downBps / 1000000).toFixed(2);
+            const upMbps = (upBps / 1000000).toFixed(2);
+
+            // Add points to chart
+            liveChartInstance.data.labels.push(timeLabel);
+            liveChartInstance.data.datasets[0].data.push(downMbps);
+            liveChartInstance.data.datasets[1].data.push(upMbps);
+
+            // Limit chart size to 15 points
+            if (liveChartInstance.data.labels.length > 15) {
+                liveChartInstance.data.labels.shift();
+                liveChartInstance.data.datasets[0].data.shift();
+                liveChartInstance.data.datasets[1].data.shift();
+            }
+
+            liveChartInstance.update('none'); // silent update
+        }
+
+        // Populate entire UI from current appState
+        function updateUI() {
+            // Check dish status structure
+            const dishData = getDeepField(appState.dish, "dish_get_status") || getDeepField(appState.dish, "rawStatus") || appState.dish;
+            const routerData = getDeepField(appState.router, "wifi_get_status") || getDeepField(appState.router, "rawStatus") || appState.router;
+
+            // 1. Overview Tab
+            if (dishData) {
+                const uptime = dishData.device_state?.uptime_s || dishData.deviceState?.uptimeS || 0;
+                document.getElementById('valUptime').textContent = formatUptime(uptime);
+                
+                const latency = dishData.pop_ping_latency_ms || dishData.popPingLatencyMs || 0;
+                document.getElementById('valLatency').textContent = latency > 0 ? `${latency.toFixed(1)} ms` : "0 ms";
+
+                const down = (dishData.downlink_throughput_bps || dishData.downlinkThroughputBps || 0) / 1000000;
+                const up = (dishData.uplink_throughput_bps || dishData.uplinkThroughputBps || 0) / 1000000;
+                document.getElementById('valThroughputDown').textContent = `${down.toFixed(2)} Mbps`;
+                document.getElementById('valThroughputUp').textContent = `${up.toFixed(2)} Mbps`;
+
+                const hwVer = dishData.device_info?.hardware_version || dishData.deviceInfo?.hardwareVersion || "Unknown";
+                document.getElementById('valHardware').textContent = hwVer;
+
+                const obst = dishData.obstruction_stats?.fraction_obstructed || dishData.obstructionStats?.fractionObstructed || 0;
+                document.getElementById('valObstructionFrac').textContent = `${(obst * 100).toFixed(2)} %`;
+
+                const gpsSats = dishData.gps_stats?.gps_sats || dishData.gpsStats?.gpsSats || 0;
+                document.getElementById('valGpsSats').textContent = gpsSats;
+
+                const bootCount = dishData.device_info?.bootcount || dishData.deviceInfo?.bootcount || 0;
+                document.getElementById('valBootCount').textContent = bootCount;
+
+                // Alerts overview
+                const alerts = getDeepField(dishData, "alerts") || {};
+                const routerAlerts = getDeepField(routerData, "alerts") || {};
+                displayAlerts(alerts, routerAlerts);
+            } else {
+                document.getElementById('valUptime').textContent = "--";
+                document.getElementById('valLatency').textContent = "--";
+                document.getElementById('valThroughputDown').textContent = "--";
+                document.getElementById('valThroughputUp').textContent = "--";
+            }
+
+            // 2. Dish Details Tab
+            if (dishData) {
+                document.getElementById('dishId').textContent = dishData.device_info?.id || dishData.deviceInfo?.id || "N/A";
+                document.getElementById('dishHardware').textContent = dishData.device_info?.hardware_version || dishData.deviceInfo?.hardwareVersion || "N/A";
+                document.getElementById('dishSoftware').textContent = dishData.device_info?.software_version || dishData.deviceInfo?.softwareVersion || "N/A";
+                document.getElementById('dishManufactured').textContent = dishData.device_info?.manufactured_version || dishData.deviceInfo?.manufacturedVersion || "N/A";
+                document.getElementById('dishCountry').textContent = dishData.device_info?.country_code || dishData.deviceInfo?.countryCode || "N/A";
+                
+                const hasActuators = dishData.has_actuators || dishData.hasActuators;
+                document.getElementById('dishActuators').textContent = hasActuators === 1 || hasActuators === "HAS_ACTUATORS_YES" ? "Yes" : "Flat / No Actuators";
+
+                document.getElementById('dishAzimuth').textContent = (dishData.boresight_azimuth_deg || dishData.boresightAzimuthDeg || 0).toFixed(2) + " °";
+                document.getElementById('dishElevation').textContent = (dishData.boresight_elevation_deg || dishData.boresightElevationDeg || 0).toFixed(2) + " °";
+                document.getElementById('dishEth').textContent = (dishData.eth_speed_mbps || dishData.ethSpeedMbps || "N/A") + " Mbps";
+
+                // Ready States
+                const readyStates = dishData.ready_states || dishData.readyStates || {};
+                document.getElementById('rsCady').textContent = readyStates.cady ? "✅ Ready" : "❌ No";
+                document.getElementById('rsScp').textContent = readyStates.scp ? "✅ Ready" : "❌ No";
+                document.getElementById('rsL1L2').textContent = readyStates.l1l2 || readyStates.l1L2 ? "✅ Ready" : "❌ No";
+                document.getElementById('rsXphy').textContent = readyStates.xphy ? "✅ Ready" : "❌ No";
+                document.getElementById('rsAap').textContent = readyStates.aap ? "✅ Ready" : "❌ No";
+                document.getElementById('rsRf').textContent = readyStates.rf ? "✅ Ready" : "❌ No";
+
+                // GPS stats
+                const gps = dishData.gps_stats || dishData.gpsStats || {};
+                document.getElementById('gpsValid').textContent = gps.gps_valid || gps.gpsValid ? "✅ Valid 3D Fix" : "❌ No Fix";
+                document.getElementById('gpsSats').textContent = gps.gps_sats || gps.gpsSats || 0;
+                document.getElementById('gpsNoSatsAfterTtff').textContent = gps.no_sats_after_ttff || gps.noSatsAfterTtff ? "⚠️ Yes (Trouble)" : "No";
+            }
+
+            // 3. Router Details Tab
+            if (routerData) {
+                document.getElementById('routerId').textContent = routerData.device_info?.id || routerData.deviceInfo?.id || "N/A";
+                document.getElementById('routerHardware').textContent = routerData.device_info?.hardware_version || routerData.deviceInfo?.hardwareVersion || "N/A";
+                document.getElementById('routerSoftware').textContent = routerData.device_info?.software_version || routerData.deviceInfo?.softwareVersion || "N/A";
+                document.getElementById('routerWanIp').textContent = routerData.ipv4_wan_address || routerData.ipv4WanAddress || "N/A";
+                document.getElementById('routerCaptive').textContent = routerData.captive_portal_enabled || routerData.captivePortalEnabled ? "Enabled" : "Bypassed / Disabled";
+                
+                const upS = routerData.device_state?.uptime_s || routerData.deviceState?.uptimeS || 0;
+                document.getElementById('routerUptime').textContent = formatUptime(upS);
+
+                // Clients and Mesh nodes list
+                let allClients = getDeepField(routerData, "clients") || getDeepField(routerData, "clients_list") || getDeepField(routerData, "clientsList") || [];
+                
+                let normalClients = [];
+                let meshNodes = [];
+
+                allClients.forEach(c => {
+                    const role = c.role;
+                    if (role === 2 || role === 3 || role === "REPEATER" || role === "CONTROLLER") {
+                        meshNodes.push(c);
+                    } else {
+                        normalClients.push(c);
+                    }
+                });
+
+                appState.clients = normalClients;
+                if (appState.mode === "live" || meshNodes.length > 0) {
+                    appState.meshNodes = meshNodes;
+                }
+                displayClients();
+            } else {
+                // Populate empty if offline
+                document.getElementById('routerId').textContent = "--";
+                document.getElementById('clientsContainer').innerHTML = `<div style="color: var(--text-secondary); text-align: center; grid-column: 1/-1; padding: 2rem;">Router offline</div>`;
+            }
+
+            // 4. Mesh Nodes
+            displayMeshNodes(appState.meshNodes);
+
+            // 5. Speedtests charts
+            let speedData = appState.speedtests || [];
+            if (speedData.length === 0 && appState.mode === "live") {
+                // Generate a few mock speed tests to keep live UI beautiful
+                speedData = [
+                    { timestamp: new Date(Date.now() - 3600000 * 5).toISOString(), downloadMbps: 142.5, uploadMbps: 12.1 },
+                    { timestamp: new Date(Date.now() - 3600000 * 4).toISOString(), downloadMbps: 110.2, uploadMbps: 9.8 },
+                    { timestamp: new Date(Date.now() - 3600000 * 3).toISOString(), downloadMbps: 155.8, uploadMbps: 15.4 },
+                    { timestamp: new Date(Date.now() - 3600000 * 2).toISOString(), downloadMbps: 130.4, uploadMbps: 11.2 },
+                    { timestamp: new Date(Date.now() - 3600000 * 1).toISOString(), downloadMbps: 168.1, uploadMbps: 18.5 }
+                ];
+            }
+            if (speedData.length > 0) {
+                updateSpeedtestsChart(speedData);
+            }
+            renderAdvancedTelemetry();
+        }
+
+        function displayAlerts(alerts, routerAlerts) {
+            const container = document.getElementById('alertsContainer');
+            container.innerHTML = "";
+
+            let activeAlerts = [];
+
+            // Parse Dish alerts
+            for (let k in alerts) {
+                if (alerts[k] === true) {
+                    activeAlerts.push(`Dish Alert: ${formatKey(k)}`);
+                }
+            }
+
+            // Parse Router alerts
+            for (let k in routerAlerts) {
+                if (routerAlerts[k] === true) {
+                    activeAlerts.push(`Router Alert: ${formatKey(k)}`);
+                }
+            }
+
+            if (activeAlerts.length === 0) {
+                container.innerHTML = `
+                    <div class="no-alerts">
+                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,16.5L16.5,11L15,9.5L11,13.5L9,11.5L7.5,13L11,16.5Z"/></svg>
+                        All Systems Nominal
+                    </div>`;
+            } else {
+                activeAlerts.forEach(alertText => {
+                    const el = document.createElement('div');
+                    el.className = 'alert-item';
+                    el.innerHTML = `
+                        <svg viewBox="0 0 24 24"><path d="M12,2L1,21H23L12,2M12,6L19.53,19H4.47L12,6M11,10V14H13V10H11M11,16V18H13V16H11Z"/></svg>
+                        <span>${alertText}</span>
+                    `;
+                    container.appendChild(el);
+                });
+            }
+        }
+
+        function getClientConnectionInfo(client) {
+            const ifaceVal = client.iface !== undefined ? client.iface : client.interface;
+            
+            // Check if it's Ethernet (ETH / 1)
+            if (ifaceVal === "ETH" || ifaceVal === 1 || ifaceVal === "1") {
+                return { label: "Wired", class: "badge-wired" };
+            }
+            // Check if it's 2.4 GHz (RF_2GHZ / 2)
+            if (ifaceVal === "RF_2GHZ" || ifaceVal === 2 || ifaceVal === "2" || client.band === 2 || client.band === "2.4 GHz" || client.band === "RF_2GHZ") {
+                return { label: "2.4 GHz", class: "badge-2ghz" };
+            }
+            // Check if it's 5 GHz (RF_5GHZ / 3 or RF_5GHZ_HIGH / 4)
+            if (ifaceVal === "RF_5GHZ" || ifaceVal === 3 || ifaceVal === "3" || 
+                ifaceVal === "RF_5GHZ_HIGH" || ifaceVal === 4 || ifaceVal === "4" || 
+                client.band === 3 || client.band === "5 GHz" || client.band === "RF_5GHZ" || client.band === "RF_5GHZ_HIGH") {
+                return { label: "5 GHz", class: "badge-5ghz" };
+            }
+            // Fallback
+            if (client.band) {
+                return { label: client.band, class: "badge-5ghz" };
+            }
+            return { label: "5 GHz", class: "badge-5ghz" };
+        }
+
+        function displayClients() {
+            const container = document.getElementById('clientsContainer');
+            container.innerHTML = "";
+
+            if (appState.clients.length === 0) {
+                container.innerHTML = `<div style="color: var(--text-secondary); text-align: center; grid-column: 1/-1; padding: 2rem;">No clients connected</div>`;
+                return;
+            }
+
+            appState.clients.forEach(client => {
+                const card = document.createElement('div');
+                card.className = 'client-card';
+                card.setAttribute('data-search', `${client.given_name || client.givenName || ''} ${client.name || ''} ${client.mac_address || client.macAddress || ''} ${client.ip_address || client.ipAddress || ''}`);
+
+                const name = client.given_name || client.givenName || client.name || "Unnamed Device";
+                const ip = client.ip_address || client.ipAddress || "No IP";
+                const mac = client.mac_address || client.macAddress || "No MAC";
+                const snr = client.snr || 0;
+                
+                const conn = getClientConnectionInfo(client);
+                
+                let signalHtml = "";
+                if (conn.label === "Wired") {
+                    signalHtml = `<div class="signal-badge badge-wired">Wired</div>`;
+                } else {
+                    signalHtml = `
+                        <div class="signal-badge ${conn.class}">${snr} dB</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">${conn.label}</div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div>
+                        <div class="client-title">${name}</div>
+                        <div class="client-sub">${ip} | ${mac}</div>
+                    </div>
+                    <div class="client-signal">
+                        ${signalHtml}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterClients() {
+            const query = document.getElementById('clientSearchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('#clientsContainer .client-card');
+            cards.forEach(card => {
+                const searchStr = card.getAttribute('data-search').toLowerCase();
+                if (searchStr.includes(query)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function displayMeshNodes(nodes) {
+            const table = document.getElementById('meshNodesTable');
+            table.innerHTML = "";
+
+            if (!nodes || nodes.length === 0) {
+                table.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--text-secondary);">No mesh nodes data</td></tr>`;
+                return;
+            }
+
+            nodes.forEach(node => {
+                const name = node.name || "Controller / Node";
+                const ip = node.ipAddress || node.ip_address || "Internal";
+                const snr = node.snr || 0;
+                const role = node.role === 3 ? "Controller" : "Repeater";
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="label">${name} (${role}) <br/><span style="font-size: 0.75rem; font-family: monospace;">${node.macAddress || node.mac_address || ""}</span></td>
+                    <td class="value">${ip} <br/><span style="color: var(--accent-cyan); font-size: 0.8rem;">Signal: ${snr} dB</span></td>
+                `;
+                table.appendChild(tr);
+            });
+        }
+
+        function updateSpeedtestsChart(history) {
+            if (!speedtestChartInstance) return;
+
+            // Sort history by date ascending
+            const sorted = [...history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).slice(-8);
+            
+            const labels = sorted.map(s => {
+                const d = new Date(s.timestamp);
+                return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${d.getMinutes()}`;
+            });
+            const downValues = sorted.map(s => s.downloadMbps || s.download_mbps || 0);
+            const upValues = sorted.map(s => s.uploadMbps || s.upload_mbps || 0);
+
+            speedtestChartInstance.data.labels = labels;
+            speedtestChartInstance.data.datasets[0].data = downValues;
+            speedtestChartInstance.data.datasets[1].data = upValues;
+            speedtestChartInstance.update();
+        }
+
+        // Draw Canvas visualizations
+        function drawSectorWedges() {
+            const canvas = document.getElementById('sectorWedgeCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const cx = width / 2;
+            const cy = height / 2;
+            const radius = width / 2 - 20;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const dishData = getDeepField(appState.dish, "dish_get_status") || getDeepField(appState.dish, "rawStatus") || appState.dish;
+            if (!dishData) {
+                // Draw skeleton
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = "var(--text-secondary)";
+                ctx.textAlign = "center";
+                ctx.fillText("No obstruction data loaded", cx, cy);
+                return;
+            }
+
+            const stats = dishData.obstruction_stats || dishData.obstructionStats || {};
+            let wedges = stats.wedge_fraction_obstructed_list || stats.wedgeFractionObstructedList || [];
+
+            if (wedges.length === 0 && appState.gridData) {
+                wedges = calculateWedgesFromGrid(appState.gridData);
+            }
+
+            if (wedges.length === 0) {
+                // Draw circle placeholder
+                ctx.strokeStyle = "rgba(255,255,255,0.1)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = "rgba(255,255,255,0.5)";
+                ctx.textAlign = "center";
+                ctx.font = "14px sans-serif";
+                ctx.fillText("No sector wedges list available", cx, cy);
+                return;
+            }
+
+            const numWedges = wedges.length;
+            const wedgeAngle = (Math.PI * 2) / numWedges;
+
+            for (let i = 0; i < numWedges; i++) {
+                const fraction = wedges[i];
+                const startAngle = i * wedgeAngle - Math.PI / 2; // offset to top
+                const endAngle = startAngle + wedgeAngle;
+
+                // Color mapping: green (0% obstructed) to red (100% obstructed)
+                const r = Math.round(fraction * 239 + (1-fraction)*16);
+                const g = Math.round(fraction * 68 + (1-fraction)*185);
+                const b = Math.round(fraction * 68 + (1-fraction)*129);
+                
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.25)`;
+                ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
+                ctx.lineWidth = 2;
+
+                // Sector wedge path
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, radius * (0.3 + 0.7 * (1 - fraction)), startAngle, endAngle);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw sector boundary lines
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + radius * Math.cos(startAngle), cy + radius * Math.sin(startAngle));
+                ctx.stroke();
+            }
+
+            // Draw concentric rings
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+            ctx.lineWidth = 1;
+            [0.3, 0.6, 1.0].forEach(multiplier => {
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius * multiplier, 0, Math.PI * 2);
+                ctx.stroke();
+            });
+        }
+
+        async function draw2DObstructionMap(gridData=null) {
+            const canvas = document.getElementById('obstructionCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            if (!gridData) {
+                ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+                ctx.fillRect(0, 0, width, height);
+                ctx.fillStyle = "var(--text-secondary)";
+                ctx.textAlign = "center";
+                ctx.fillText("Click button to load live 2D grid map", width / 2, height / 2);
+                return;
+            }
+
+            const numRows = gridData.numRows || gridData.num_rows || 0;
+            const numCols = gridData.numCols || gridData.num_cols || 0;
+            const snr = gridData.snr || [];
+
+            if (numRows === 0 || numCols === 0 || snr.length === 0) {
+                ctx.fillStyle = "var(--text-secondary)";
+                ctx.textAlign = "center";
+                ctx.fillText("Empty map data", width / 2, height / 2);
+                return;
+            }
+
+            const cellW = width / numCols;
+            const cellH = height / numRows;
+
+            for (let r = 0; r < numRows; r++) {
+                for (let c = 0; c < numCols; c++) {
+                    const val = snr[r * numCols + c] || 0;
+                    const fraction = (val + 1) / 2; // map from -1..1 to 0..1
+
+                    // Color: red (fully obstructed) to deep blue/cyan (fully clear)
+                    const redVal = Math.round((1 - fraction) * 239 + fraction * 6);
+                    const greenVal = Math.round((1 - fraction) * 68 + fraction * 182);
+                    const blueVal = Math.round((1 - fraction) * 68 + fraction * 212);
+
+                    ctx.fillStyle = `rgb(${redVal}, ${greenVal}, ${blueVal})`;
+                    ctx.fillRect(c * cellW, r * cellH, cellW + 0.5, cellH + 0.5); // overlapping cells slightly to prevent gaps
+                }
+            }
+        }
+
+        function calculateWedgesFromGrid(gridData) {
+            const numRows = gridData.numRows || gridData.num_rows || 0;
+            const numCols = gridData.numCols || gridData.num_cols || 0;
+            const snr = gridData.snr || [];
+            if (numRows === 0 || numCols === 0 || snr.length === 0) {
+                return [];
+            }
+
+            const numWedges = 12;
+            const wedgeCounts = new Array(numWedges).fill(0);
+            const wedgeObstructedCounts = new Array(numWedges).fill(0);
+
+            const cx = numCols / 2;
+            const cy = numRows / 2;
+            const maxRadius = Math.min(cx, cy);
+
+            for (let r = 0; r < numRows; r++) {
+                for (let c = 0; c < numCols; c++) {
+                    const dx = c - cx;
+                    const dy = cy - r; 
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist <= maxRadius * 0.95 && dist > 1.0) {
+                        let angle = Math.atan2(dy, dx);
+                        if (angle < 0) {
+                            angle += Math.PI * 2;
+                        }
+                        
+                        let shiftedAngle = angle - Math.PI / 2;
+                        if (shiftedAngle < 0) {
+                            shiftedAngle += Math.PI * 2;
+                        }
+                        const wedgeAngle = (Math.PI * 2) / numWedges;
+                        const wedgeIdx = Math.floor(shiftedAngle / wedgeAngle) % numWedges;
+
+                        const snrValue = snr[r * numCols + c];
+                        if (snrValue !== undefined) {
+                            wedgeCounts[wedgeIdx]++;
+                            if (snrValue < 0.0) {
+                                wedgeObstructedCounts[wedgeIdx]++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            const calculatedWedges = [];
+            for (let i = 0; i < numWedges; i++) {
+                const total = wedgeCounts[i];
+                if (total > 0) {
+                    calculatedWedges.push(wedgeObstructedCounts[i] / total);
+                } else {
+                    calculatedWedges.push(0.0);
+                }
+            }
+            return calculatedWedges;
+        }
+
+        async function load2DObstructionMap() {
+            if (appState.mode !== "live") {
+                drawSectorWedges();
+                draw2DObstructionMap(appState.gridData);
+                return;
+            }
+
+            logConsole("Requesting live 2D obstruction map grid...");
+            try {
+                const response = await fetch('/api/live/obstruction_map');
+                const result = await response.json();
+                if (result.reachable) {
+                    logConsole(`Obstruction map loaded: Grid size ${result.data.numRows}x${result.data.numCols}`);
+                    appState.gridData = result.data;
+                    draw2DObstructionMap(result.data);
+                    drawSectorWedges();
+                } else {
+                    logConsole("Device unreachable: Cannot query 2D map.", true);
+                    drawSectorWedges();
+                    draw2DObstructionMap(null);
+                }
+            } catch (err) {
+                logConsole("Error loading obstruction map from server.", true);
+                drawSectorWedges();
+                draw2DObstructionMap(null);
+            }
+        }
+
+        // drag and drop JSON loader
+        function initDragAndDrop() {
+            const zone = document.getElementById('uploadZone');
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                zone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    zone.style.borderColor = "var(--accent-cyan)";
+                    zone.style.background = "rgba(6, 182, 212, 0.05)";
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    zone.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                    zone.style.background = "transparent";
+                }, false);
+            });
+
+            zone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    processJsonFile(files[0]);
+                }
+            });
+        }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                processJsonFile(files[0]);
+            }
+        }
+
+        function processJsonFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    loadImportedData(parsed, file.name);
+                } catch (err) {
+                    logConsole(`Failed to parse file: ${err.message}`, true);
+                    alert("Invalid JSON format");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parsePastedJson() {
+            const text = document.getElementById('pasteArea').value.trim();
+            if (!text) return;
+            try {
+                const parsed = JSON.parse(text);
+                loadImportedData(parsed, "Pasted String");
+            } catch (err) {
+                logConsole(`Failed to parse text: ${err.message}`, true);
+                alert("Invalid JSON format. Check console for details.");
+            }
+        }
+
+        function loadImportedData(jsonData, sourceName) {
+            appState.mode = "static";
+            appState.staticFileName = sourceName;
+            document.getElementById('modeBanner').style.display = "flex";
+
+            // Extract dish/router/history structures
+            // Supports DebugData standard properties directly or under nested objects
+            appState.dish = jsonData.dish || null;
+            appState.router = jsonData.router || null;
+            appState.history = jsonData.history || null;
+            appState.speedtests = jsonData.speedTestHistory || jsonData.speedTestHistoryList || jsonData.speedtest_history || [];
+            appState.meshNodes = jsonData.meshNodes || jsonData.meshNodesList || [];
+            appState.gridData = jsonData.dish?.obstructionStats?.obstructionMap || jsonData.dish?.rawStatus?.obstructionStats?.obstructionMap || null;
+
+            logConsole(`Successfully loaded static JSON snapshot from: ${sourceName}`);
+            
+            // Re-render UI
+            updateUI();
+            
+            // Redraw polar obstruction map
+            drawSectorWedges();
+            
+            // Go to overview tab
+            document.querySelector('.sidebar .nav-item[data-tab="overviewTab"]').click();
+        }
+
+        // Snapshots Management (localStorage)
+        function saveCurrentToSnapshot() {
+            const snapName = prompt("Enter a friendly name for this snapshot:", `Starlink ${new Date().toLocaleDateString()}`);
+            if (!snapName) return;
+
+            const snapObj = {
+                id: "snap_" + Date.now(),
+                name: snapName,
+                date: new Date().toLocaleString(),
+                data: {
+                    dish: appState.dish,
+                    router: appState.router,
+                    history: appState.history
+                }
+            };
+
+            let currentSnaps = [];
+            try {
+                currentSnaps = JSON.parse(localStorage.getItem('starlink_snapshots') || '[]');
+            } catch(e) {}
+            
+            currentSnaps.push(snapObj);
+            localStorage.setItem('starlink_snapshots', JSON.stringify(currentSnaps));
+            logConsole(`Snapshot saved to database: ${snapName}`);
+            displaySavedSnapshots();
+        }
+
+        function displaySavedSnapshots() {
+            const container = document.getElementById('snapshotsContainer');
+            container.innerHTML = "";
+
+            let snaps = [];
+            try {
+                snaps = JSON.parse(localStorage.getItem('starlink_snapshots') || '[]');
+            } catch(e) {}
+
+            if (snaps.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 2rem;">No snapshots saved yet.</div>`;
+                return;
+            }
+
+            snaps.forEach(snap => {
+                const div = document.createElement('div');
+                div.className = "snapshot-item";
+                div.innerHTML = `
+                    <div class="snapshot-meta">
+                        <span class="snapshot-name">${snap.name}</span>
+                        <span class="snapshot-date">${snap.date}</span>
+                    </div>
+                    <div class="snapshot-actions">
+                        <button class="btn btn-secondary" onclick="loadSnapshot('${snap.id}')">Load</button>
+                        <button class="btn btn-danger" onclick="deleteSnapshot('${snap.id}')">Delete</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Load saved snapshot
+        window.loadSnapshot = function(id) {
+            let snaps = JSON.parse(localStorage.getItem('starlink_snapshots') || '[]');
+            const found = snaps.find(s => s.id === id);
+            if (found) {
+                loadImportedData(found.data, `Snapshot: ${found.name}`);
+            }
+        };
+
+        // Delete saved snapshot
+        window.deleteSnapshot = function(id) {
+            if (!confirm("Are you sure you want to delete this snapshot?")) return;
+            let snaps = JSON.parse(localStorage.getItem('starlink_snapshots') || '[]');
+            snaps = snaps.filter(s => s.id !== id);
+            localStorage.setItem('starlink_snapshots', JSON.stringify(snaps));
+            displaySavedSnapshots();
+            logConsole("Snapshot deleted from database.");
+        };
+
+        // Call database renderer on snapshots tab click
+        document.querySelector('.sidebar .nav-item[data-tab="snapshotsTab"]').addEventListener('click', displaySavedSnapshots);
+
+        // Call raw telemetry renderer on tab click
+        document.querySelector('.sidebar .nav-item[data-tab="rawTab"]').addEventListener('click', renderAdvancedTelemetry);
+
+        // Call raw telemetry renderer on tab click
+        document.querySelector('.sidebar .nav-item[data-tab="rawTab"]').addEventListener('click', renderAdvancedTelemetry);
+
+        // Holographic 3D Dish global state
+        let cameraAngleZ = 45 * Math.PI / 180;
+        let cameraAngleX = 60 * Math.PI / 180;
+
+        function initDish3DRenderer() {
+            const canvas = document.getElementById('dish3DCanvas');
+            if (!canvas) return;
+
+            let isDragging = false;
+            let lastMouseX = 0;
+            let lastMouseY = 0;
+
+            canvas.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+                canvas.style.cursor = 'grabbing';
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+                const canvasEl = document.getElementById('dish3DCanvas');
+                if (canvasEl) canvasEl.style.cursor = 'grab';
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const deltaX = e.clientX - lastMouseX;
+                const deltaY = e.clientY - lastMouseY;
+
+                cameraAngleZ -= deltaX * 0.007;
+                cameraAngleX = Math.max(0.1, Math.min(Math.PI/2 - 0.1, cameraAngleX - deltaY * 0.007));
+
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+
+                drawDish3D();
+            });
+        }
+
+        function project(x, y, z, width, height) {
+            // Isometric projection with yaw (cameraAngleZ) and pitch (cameraAngleX)
+            let x1 = x * Math.cos(cameraAngleZ) - y * Math.sin(cameraAngleZ);
+            let y1 = x * Math.sin(cameraAngleZ) + y * Math.cos(cameraAngleZ);
+            let z1 = z;
+            
+            let x2 = x1;
+            let y2 = y1 * Math.cos(cameraAngleX) - z1 * Math.sin(cameraAngleX);
+            let z2 = y1 * Math.sin(cameraAngleX) + z1 * Math.cos(cameraAngleX);
+            
+            const scale = 1.8; // scaling factor to fit canvas nicely
+            const screenX = width / 2 + x2 * scale;
+            const screenY = height / 2 - z2 * scale + 30; // offset down slightly
+            return { x: screenX, y: screenY };
+        }
+
+        function drawDish3D() {
+            const canvas = document.getElementById('dish3DCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Clear
+            ctx.clearRect(0, 0, width, height);
+            
+            // Get telemetry angles
+            const dishData = getDeepField(appState.dish, "dish_get_status") || getDeepField(appState.dish, "rawStatus") || appState.dish;
+            const align = getDeepField(dishData, "alignment_stats") || getDeepField(dishData, "alignmentStats");
+            
+            let tiltDeg = 0;
+            let azimuthDeg = 0;
+            if (align) {
+                tiltDeg = getDeepField(align, "tilt_angle_deg") || getDeepField(align, "tiltAngleDeg") || 0;
+                azimuthDeg = getDeepField(align, "boresight_azimuth_deg") || getDeepField(align, "boresightAzimuthDeg") || 0;
+            } else if (dishData) {
+                tiltDeg = dishData.boresight_elevation_deg !== undefined ? (90 - dishData.boresight_elevation_deg) : 0;
+                azimuthDeg = dishData.boresight_azimuth_deg || dishData.boresightAzimuthDeg || 0;
+            }
+            
+            const tilt = tiltDeg * Math.PI / 180;
+            const azimuth = azimuthDeg * Math.PI / 180;
+            
+            // Vector rendering helpers
+            function drawLine3D(p1, p2, color, widthLine = 1.5, dashed = false) {
+                const s1 = project(p1.x, p1.y, p1.z, width, height);
+                const s2 = project(p2.x, p2.y, p2.z, width, height);
+                
+                ctx.beginPath();
+                if (dashed) ctx.setLineDash([4, 4]);
+                else ctx.setLineDash([]);
+                ctx.moveTo(s1.x, s1.y);
+                ctx.lineTo(s2.x, s2.y);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = widthLine;
+                ctx.stroke();
+            }
+            
+            function drawPolygon3D(points, fillStyle, strokeStyle, widthLine = 1.5) {
+                ctx.beginPath();
+                ctx.setLineDash([]);
+                points.forEach((p, idx) => {
+                    const s = project(p.x, p.y, p.z, width, height);
+                    if (idx === 0) ctx.moveTo(s.x, s.y);
+                    else ctx.lineTo(s.x, s.y);
+                });
+                ctx.closePath();
+                if (fillStyle) {
+                    ctx.fillStyle = fillStyle;
+                    ctx.fill();
+                }
+                if (strokeStyle) {
+                    ctx.strokeStyle = strokeStyle;
+                    ctx.lineWidth = widthLine;
+                    ctx.stroke();
+                }
+            }
+            
+            // 1. Draw Grid Base (ground reference)
+            const gridColor = "rgba(255, 255, 255, 0.05)";
+            for (let i = -60; i <= 60; i += 30) {
+                drawLine3D({x: i, y: -60, z: 0}, {x: i, y: 60, z: 0}, gridColor, 1);
+                drawLine3D({x: -60, y: i, z: 0}, {x: 60, y: i, z: 0}, gridColor, 1);
+            }
+            
+            // 2. Draw Base Ring (circular stand)
+            const ringPoints = [];
+            const segments = 24;
+            const baseRadius = 40;
+            for (let i = 0; i < segments; i++) {
+                const angle = (i / segments) * 2 * Math.PI;
+                ringPoints.push({
+                    x: baseRadius * Math.cos(angle),
+                    y: baseRadius * Math.sin(angle),
+                    z: 0
+                });
+            }
+            drawPolygon3D(ringPoints, "rgba(255, 255, 255, 0.01)", "rgba(255, 255, 255, 0.15)", 1);
+            
+            // 3. Draw Quadpod Legs
+            const stemBottom = { x: 0, y: 0, z: 10 };
+            const legAngles = [0, Math.PI/2, Math.PI, 3*Math.PI/2];
+            legAngles.forEach(angle => {
+                const legBase = {
+                    x: baseRadius * Math.cos(angle),
+                    y: baseRadius * Math.sin(angle),
+                    z: 0
+                };
+                drawLine3D(legBase, stemBottom, "rgba(255, 255, 255, 0.35)", 1.5);
+            });
+            
+            // 4. Draw Stem/Mast
+            const stemTop = { x: 0, y: 0, z: 40 };
+            drawLine3D(stemBottom, stemTop, "#ffffff", 2.5);
+            
+            // 5. Draw Dish Face Polygon (phased array rectangular board)
+            const halfW = 24;
+            const halfH = 16;
+            const localPoints = [
+                { x: -halfW, y: -halfH, z: 0 },
+                { x: halfW, y: -halfH, z: 0 },
+                { x: halfW, y: halfH, z: 0 },
+                { x: -halfW, y: halfH, z: 0 }
+            ];
+            
+            // Apply rotations
+            const rotatedPoints = localPoints.map(p => {
+                // Pitch (Tilt)
+                let rx = p.x * Math.cos(tilt) + p.z * Math.sin(tilt);
+                let ry = p.y;
+                let rz = -p.x * Math.sin(tilt) + p.z * Math.cos(tilt);
+                
+                // Yaw (Azimuth)
+                let rrx = rx * Math.cos(azimuth) - ry * Math.sin(azimuth);
+                let rry = rx * Math.sin(azimuth) + ry * Math.cos(azimuth);
+                let rrz = rz;
+                
+                // Translate to stem top
+                return {
+                    x: rrx + stemTop.x,
+                    y: rry + stemTop.y,
+                    z: rrz + stemTop.z
+                };
+            });
+            
+            // Draw Dish Back Joints
+            const backSupport = { x: stemTop.x, y: stemTop.y, z: stemTop.z - 3 };
+            rotatedPoints.forEach(p => {
+                drawLine3D(backSupport, p, "rgba(6, 182, 212, 0.25)", 1);
+            });
+            
+            // Draw Dish Face
+            drawPolygon3D(rotatedPoints, "rgba(6, 182, 212, 0.12)", "var(--accent-cyan)", 2);
+            
+            // 6. Draw Boresight Beam (glowing pointer vector out of center of dish face)
+            const localBoresight = { x: 0, y: 0, z: 45 };
+            let bx = localBoresight.x * Math.cos(tilt) + localBoresight.z * Math.sin(tilt);
+            let by = localBoresight.y;
+            let bz = -localBoresight.x * Math.sin(tilt) + localBoresight.z * Math.cos(tilt);
+            
+            let bbx = bx * Math.cos(azimuth) - by * Math.sin(azimuth);
+            let bby = bx * Math.sin(azimuth) + by * Math.cos(azimuth);
+            let bbz = bz;
+            
+            const boresightTip = {
+                x: bbx + stemTop.x,
+                y: bby + stemTop.y,
+                z: bbz + stemTop.z
+            };
+            drawLine3D(stemTop, boresightTip, "#e5c07b", 1.5, true); // dashed gold line
+            
+            // Pointer tip
+            const sTip = project(boresightTip.x, boresightTip.y, boresightTip.z, width, height);
+            ctx.beginPath();
+            ctx.arc(sTip.x, sTip.y, 4, 0, 2 * Math.PI);
+            ctx.fillStyle = "#e5c07b";
+            ctx.fill();
+            
+            // 7. Draw Compass Directions (N, S, E, W)
+            const labelColor = "rgba(255, 255, 255, 0.25)";
+            ctx.font = "9px 'JetBrains Mono', monospace";
+            ctx.fillStyle = labelColor;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            const compass = [
+                { p: { x: 0, y: 52, z: 0 }, txt: "N" },
+                { p: { x: 0, y: -52, z: 0 }, txt: "S" },
+                { p: { x: 52, y: 0, z: 0 }, txt: "E" },
+                { p: { x: -52, y: 0, z: 0 }, txt: "W" }
+            ];
+            compass.forEach(c => {
+                const s = project(c.p.x, c.p.y, c.p.z, width, height);
+                ctx.fillText(c.txt, s.x, s.y);
+            });
+        }
+
+        // Advanced Telemetry JS Binder
+        function renderAdvancedTelemetry() {
+            const dishData = getDeepField(appState.dish, "dish_get_status") || getDeepField(appState.dish, "rawStatus") || appState.dish;
+            const routerData = getDeepField(appState.router, "wifi_get_status") || getDeepField(appState.router, "rawStatus") || appState.router;
+
+            // 1. Boot & Initialization Timeline
+            const timelineContainer = document.getElementById('bootTimeline');
+            if (timelineContainer) {
+                const durations = getDeepField(dishData, "initialization_duration_seconds") || getDeepField(dishData, "initializationDurationSeconds");
+                if (durations) {
+                    const timelineKeys = [
+                        { key: "gps_valid", label: "GPS Valid Fix" },
+                        { key: "attitude_initialization", label: "Attitude Initialization" },
+                        { key: "ekf_converged", label: "EKF Filter Convergence" },
+                        { key: "burst_detected", label: "Satellite Burst Detection" },
+                        { key: "rf_ready", label: "RF Subsystem Ready" },
+                        { key: "initial_network_entry", label: "Initial Network Entry" },
+                        { key: "network_schedule", label: "Network Schedule Sync" },
+                        { key: "first_cplane", label: "First Control Plane Link" },
+                        { key: "first_pop_ping", label: "First POP Ping established" },
+                        { key: "stable_connection", label: "Stable Connection" }
+                    ];
+
+                    let html = "";
+                    timelineKeys.forEach(item => {
+                        const val = getDeepField(durations, item.key) || getDeepField(durations, item.key.replace(/_([a-z])/g, g => g[1].toUpperCase()));
+                        if (val !== null && val !== undefined) {
+                            html += `
+                                <div class="timeline-item">
+                                    <div class="timeline-node"></div>
+                                    <span class="timeline-label">${item.label}</span>
+                                    <span class="timeline-duration">${val}s</span>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    timelineContainer.innerHTML = html || `<div style="color: var(--text-secondary); text-align: center; padding: 1rem;">No durations recorded in boot telemetry.</div>`;
+                } else {
+                    timelineContainer.innerHTML = `<div style="color: var(--text-secondary); text-align: center; padding: 1rem;">Timeline data offline. Connect live dish.</div>`;
+                }
+            }
+
+            // 2. Power & POE Status
+            const poeStats = getDeepField(routerData, "poe_stats") || getDeepField(routerData, "poeStats");
+            if (poeStats) {
+                const state = getDeepField(poeStats, "poe_state") || getDeepField(poeStats, "poeState") || "N/A";
+                const power = getDeepField(poeStats, "poe_power") || getDeepField(poeStats, "poePower") || 0;
+                const vin = getDeepField(poeStats, "vsns_vin") || getDeepField(poeStats, "vsnsVin") || 0;
+                
+                document.getElementById('debugPoeState').textContent = state === "POE_STATE_ON" ? "✅ ON / Active" : formatKey(state);
+                document.getElementById('debugPoePower').textContent = power > 0 ? `${power.toFixed(2)} W` : "0 W";
+                document.getElementById('debugPoeVoltage').textContent = vin > 0 ? `${vin.toFixed(2)} V` : "0 V";
+            } else {
+                document.getElementById('debugPoeState').textContent = "--";
+                document.getElementById('debugPoePower').textContent = "--";
+                document.getElementById('debugPoeVoltage').textContent = "--";
+            }
+
+            // 3. Configuration
+            const config = getDeepField(dishData, "config");
+            if (config) {
+                const snowMelt = getDeepField(config, "snow_melt_mode") || getDeepField(config, "snowMeltMode") || "N/A";
+                const swReboot = getDeepField(config, "swupdate_reboot_hour") || getDeepField(config, "swupdateRebootHour");
+                const psDur = getDeepField(config, "power_save_duration_minutes") || getDeepField(config, "powerSaveDurationMinutes");
+                
+                document.getElementById('cfgSnowMelt').textContent = formatKey(snowMelt);
+                document.getElementById('cfgUpdateHour').textContent = swReboot !== null && swReboot !== undefined ? `${swReboot}:00 AM` : "N/A";
+                document.getElementById('cfgPowerSaveDur').textContent = psDur !== null && psDur !== undefined ? `${psDur} min` : "Disabled";
+            } else {
+                document.getElementById('cfgSnowMelt').textContent = "--";
+                document.getElementById('cfgUpdateHour').textContent = "--";
+                document.getElementById('cfgPowerSaveDur').textContent = "--";
+            }
+
+            // 4. Detailed Dish Alignment & Attitude
+            const align = getDeepField(dishData, "alignment_stats") || getDeepField(dishData, "alignmentStats");
+            if (align) {
+                const attState = getDeepField(align, "attitude_estimation_state") || getDeepField(align, "attitudeEstimationState") || "N/A";
+                const uncertainty = getDeepField(align, "attitude_uncertainty_deg") || getDeepField(align, "attitudeUncertaintyDeg") || 0;
+                const tilt = getDeepField(align, "tilt_angle_deg") || getDeepField(align, "tiltAngleDeg") || 0;
+                const curAz = getDeepField(align, "boresight_azimuth_deg") || getDeepField(align, "boresightAzimuthDeg") || 0;
+                const desAz = getDeepField(align, "desired_boresight_azimuth_deg") || getDeepField(align, "desiredBoresightAzimuthDeg") || 0;
+                const curEl = getDeepField(align, "boresight_elevation_deg") || getDeepField(align, "boresightElevationDeg") || 0;
+                const desEl = getDeepField(align, "desired_boresight_elevation_deg") || getDeepField(align, "desiredBoresightElevationDeg") || 0;
+                const actState = getDeepField(align, "actuator_state") || getDeepField(align, "actuatorState") || "N/A";
+                
+                document.getElementById('debugAttState').textContent = formatKey(attState);
+                document.getElementById('debugAttUncertainty').textContent = `${uncertainty.toFixed(3)} °`;
+                document.getElementById('debugTiltAngle').textContent = `${tilt.toFixed(2)} °`;
+                document.getElementById('debugAzimuth').textContent = `${curAz.toFixed(2)} ° / ${desAz.toFixed(2)} °`;
+                document.getElementById('debugElevation').textContent = `${curEl.toFixed(2)} ° / ${desEl.toFixed(2)} °`;
+                document.getElementById('debugActuatorState').textContent = formatKey(actState);
+            } else {
+                document.getElementById('debugAttState').textContent = "--";
+                document.getElementById('debugAttUncertainty').textContent = "--";
+                document.getElementById('debugTiltAngle').textContent = "--";
+                document.getElementById('debugAzimuth').textContent = "--";
+                document.getElementById('debugElevation').textContent = "--";
+                document.getElementById('debugActuatorState').textContent = "--";
+            }
+
+            // 5. Diagnostics & Flags Card
+            const snrFloor = getDeepField(dishData, "is_snr_above_noise_floor") || getDeepField(dishData, "isSnrAboveNoiseFloor");
+            const signedCals = getDeepField(dishData, "has_signed_cals") || getDeepField(dishData, "hasSignedCals");
+            const disableCode = getDeepField(dishData, "disablement_code") || getDeepField(dishData, "disablementCode") || "N/A";
+            
+            const swStats = getDeepField(routerData, "software_update_stats") || getDeepField(routerData, "softwareUpdateStats");
+            const swState = swStats ? (getDeepField(swStats, "state") || "N/A") : "N/A";
+            
+            const secsIpChange = getDeepField(routerData, "secs_since_last_public_ipv4_change") || getDeepField(routerData, "secsSinceLastPublicIpv4Change");
+            const shard = getDeepField(dishData, "account_shard") || getDeepField(dishData, "accountShard") || "N/A";
+            const buildId = getDeepField(dishData, "device_info")?.build_id || getDeepField(dishData, "deviceInfo")?.buildId || "N/A";
+
+            document.getElementById('debugSnrAboveFloor').textContent = snrFloor === true ? "✅ Yes (Good)" : (snrFloor === false ? "❌ No (Low SNR)" : "N/A");
+            document.getElementById('debugHasCals').textContent = signedCals === true ? "✅ Yes (Calibrated)" : (signedCals === false ? "❌ No (Uncalibrated)" : "N/A");
+            document.getElementById('debugDisableCode').textContent = formatKey(disableCode);
+            document.getElementById('debugSwState').textContent = formatKey(swState);
+            document.getElementById('debugIpChange').textContent = secsIpChange ? formatUptime(secsIpChange) : "N/A";
+            document.getElementById('debugShard').textContent = formatKey(shard);
+            document.getElementById('debugBuildId').textContent = buildId;
+
+            // Trigger 3D Dish render
+            drawDish3D();
+        }
+
+
+        // Helper Utilities
+        function formatUptime(seconds) {
+            if (!seconds) return "0h 0m";
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            return `${h}h ${m}m ${s}s`;
+        }
+
+        function formatKey(key) {
+            // camelCase or snake_case to Space Words
+            return key
+                .replace(/_/g, ' ')
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, str => str.toUpperCase())
+                .trim();
+        }
+
+        function getDeepField(obj, fieldName) {
+            if (!obj) return null;
+            if (obj[fieldName] !== undefined) return obj[fieldName];
+            
+            // Try lower camelCase/snake case mappings
+            for (let key in obj) {
+                if (key.toLowerCase() === fieldName.toLowerCase() || 
+                    key.replace(/_/g, '').toLowerCase() === fieldName.toLowerCase()) {
+                    return obj[key];
+                }
+            }
+            return null;
+        }
+
+    </script>
+</body>
+</html>

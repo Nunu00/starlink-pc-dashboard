@@ -1,0 +1,77 @@
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+app_package = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+
+default_platform(:ios)
+
+create_keychain(
+    name: ENV["MATCH_KEYCHAIN_NAME"],
+    password: ENV["MATCH_KEYCHAIN_PASSWORD"],
+    unlock: true
+)
+
+unlock_keychain(
+  path: ENV["MATCH_KEYCHAIN_NAME"],
+  password: ENV["MATCH_KEYCHAIN_PASSWORD"]
+)
+
+platform :ios do
+  desc "Push a new beta build to TestFlight"
+  lane :beta do
+    match(type: "appstore", readonly: true)
+    build_ios_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      export_method: "app-store",
+      output_directory: "build",
+      output_name: "#{ENV["APP_BASENAME"]}.ipa",
+    )
+  end
+  lane :do_testflight do
+    match(type: "appstore", readonly: true)
+    #https://docs.fastlane.tools/actions/pilot/#use-an-application-specific-password-to-upload
+    upload_to_testflight(
+      skip_submission: true,
+      ipa: "build/#{ENV["APP_BASENAME"]}.ipa",
+      skip_waiting_for_build_processing: true,
+      apple_id: ENV["APP_APPLE_ID"]
+    )
+  end
+  lane :do_adhoc_reg do
+    register_devices(
+      devices_file: './adhoc-devices.txt',
+      username: ENV["APPLE_ID"]
+    )
+	match(type: "adhoc", force_for_new_devices: true)
+  end
+  lane :do_adhoc do
+    match(type: "adhoc", readonly: true)
+    update_project_provisioning(
+          xcodeproj: "Runner.xcodeproj",
+          target_filter: "Runner",
+          profile:ENV["sigh_#{app_package}_adhoc_profile-path"],
+          build_configuration: "Release"
+        )
+    gym(
+      workspace: "Runner.xcworkspace",
+      scheme:"Runner",
+      configuration: "Release",
+      clean: true,
+      export_method: "ad-hoc",
+      output_directory:"./build-adhoc/",
+      export_options: {
+        method: "ad-hoc",
+        provisioningProfiles: {
+          app_package => ENV["sigh_#{app_package}_adhoc_profile-name"]
+        }
+      },
+      #codesigning_identity:"iPhone Distribution: XXXXXX Common Name(XXXXXX)",
+      output_name: "#{ENV["APP_BASENAME"]}.ipa"
+    )
+  end
+  lane :clean do
+    clear_derived_data
+    xcclean
+  end
+end

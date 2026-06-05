@@ -1,0 +1,77 @@
+.ios_job:
+  variables:
+    MATCH_KEYCHAIN_NAME: ${APP_BASENAME}.${CI_JOB_ID}.keychain
+  before_script:
+    - !reference [before_script]
+    - source ~/.zprofile
+    - source ~/.zshrc
+    - '[ -n "$APPLE" ] && export $(echo "$APPLE" | xargs)'
+    - cd $CI_PROJECT_DIR/star.debug
+    - asdf plugin update --all && asdf install
+    - flutter doctor -v
+    - security lock-keychain $MATCH_KEYCHAIN_NAME || echo No $MATCH_KEYCHAIN_NAME. Skip locking
+    - rm -rf ~/Library/Keychains/${MATCH_KEYCHAIN_NAME}-db || echo Nothing to delete
+  after_script:
+    - security lock-keychain $MATCH_KEYCHAIN_NAME || echo No $MATCH_KEYCHAIN_NAME. Skip locking
+    - rm -rf ~/Library/Keychains/${MATCH_KEYCHAIN_NAME}-db || echo Nothing to delete
+  cache:
+    key: iOS-${CI_COMMIT_SHA}
+    untracked: true
+  tags: [flutter, macos]
+
+build_ios:
+  extends: .ios_job
+  stage: build
+  only:
+    - branches
+  script:
+    - cd $CI_PROJECT_DIR/star.debug
+    - flutter clean
+    - flutter packages get
+    - cd ios && pod install --repo-update && cd ..
+    - flutter build ios --release --no-codesign $BUILD_OPTS
+#    - pwd
+#    - cd ios
+#    - bundle install
+#    - bundle exec fastlane do_adhoc
+#  artifacts:
+#    expire_in: 6 mos
+#    paths:
+#      - star.debug/ios/build-adhoc/stardebug.ipa
+#      - star.debug/ios/build-adhoc/stardebug.app.dSYM.zip
+  needs: ["test"]
+
+publish_testflight:
+  extends: .ios_job
+  stage: publish
+  script:
+    - cd $CI_PROJECT_DIR/star.debug
+    - flutter clean
+    - flutter packages get
+    - cd ios && pod install --repo-update && cd ..
+    - flutter build ios --release --no-codesign $BUILD_OPTS
+    - cd ios
+    - bundle install
+    - bundle exec fastlane beta
+    - bundle exec fastlane do_testflight
+#    - pip3 install requests
+  artifacts:
+    expire_in: 6 mos
+    paths:
+      - star.debug/ios/build/${APP_BASENAME}.ipa
+      - star.debug/ios/build/${APP_BASENAME}.app.dSYM.zip
+  only:
+    refs:
+      - /^\d+\.\d+b.*$/
+    variables:
+      - "$APPLE"
+  except:
+    - branches
+  needs: ["test"]
+
+#publish_diawi_ios:
+#  stage: publish
+#  script:
+#    - _build/diawi.py $NAME $DIAWI_TOKEN ios/build-adhoc/${APP_BASENAME}.ipa
+#  when: manual
+#  needs: ["build_ios"]

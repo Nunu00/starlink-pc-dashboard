@@ -1,0 +1,617 @@
+general:
+  lang: Українська
+  app_name: Star Debug
+  language: Мова
+  close: Закрити
+  cancel: Скасувати
+  next: Далі
+  back: Назад
+  save: Зберегти
+  no_changes: Немає змін
+  try_again: Повторити
+  loading: Завантаження ...
+  loading_error: Помилка завантаження
+  error_occured: Виникла помилка
+  refresh: Оновити
+  copied_to_clipboard: Скопійовано в буфер обміну
+  confirm: Підтвердити
+  reject: Відхилити
+  no_items: Пустий список
+  got_it: Зрозуміло
+  ok: OK
+  select_lang: Оберіть мову
+  change_language: Змінити мову
+  dish: Тарілка
+  router: Роутер
+  security: Безпека
+  device_app: Додаток
+  open_json_file: Відкрити JSON файл
+  open_clipboard: Відкрити JSON з буфера обміну
+  debug_data_viewer: Перегляд Debug Data
+  no_data_found: Дані не знайдено
+  dark_mode: Темна схема
+  online: Онлайн
+  version: Версія
+  charts: Графіки
+  save_debug_data: Зберегти Debug Data
+  to_clipboard: В буфер обміну
+  to_file: У файл
+  save_as: Зберегти як
+  share: Поділитись
+  view_in_app: Переглянути у додатку
+  reboot: Рестарт
+  stow: Скласти
+  unstow: Розкласти
+  inhibit_gps: Ігнорувати GPS
+  uninhibit_gps: Довіряти GPS
+  dump_created_time: Час створення дампу
+  no_alerts: Немає попередженнь
+  confirmation: Підтвердження
+  just_now: Щойно
+  x_min_ago(t): ${t}хв тому
+  x_hours_ago(t): ${t}г тому
+  x_days_ago(t): ${t}д тому
+  should_not_be_empty: Має бути заповненим
+  yes: так
+  no: ні
+  not_specified: не вказано
+
+recent:
+  search: Пошук
+  no_options: Пустий список
+
+my:
+  my_starlinks: Мої Старлінки
+  snapshots: Знімки
+  delete_snapshot_prompt(id, ts): Чи бажаєте ви видалити знімок тарілки $id за $ts?
+  delete_all_snapshots_but_last_prompt(id): Ви бажаєте видалити ВСІ знімки для тарілки $id, крім останнього?
+  delete_dish_prompt(id): Чи бажаєте ви видалити тарілку $id?
+  delete_all_dished_prompt: Бажаєте видалити дані ВСІХ тарілок?
+
+about:
+  about: Про програму
+  about_starlink_for_ukraine: Про Народний Starlink
+  starlink_for_ukraine: Народний Starlink
+  starlink_for_ukraine_in_fb: Народний Starlink у Facebook
+  about_text: 'Додаток створений в рамках волонтерської ініціативи "**Народний Starlink**"
+
+    для потреб людей, що щодня працюють над тим, щоб зв''язок був доступний навіть
+    в місцях,
+
+    які росія намагається перетворити на пустелю.
+
+    '
+  project_on_github: Проект на GitHub
+
+settings:
+  settings: Налаштування
+  auto_store_dish_log: Автозбереження знімків
+  auto_store_dish_log_sub: Автоматично зберігати знімки з Starlink Live в Мої Старлінки
+
+valkyrie:
+  valkyrie_check: Перевірка від Valkyrie
+  valkyrie_check_sub: Перевіряє SSID роутера на наявність в базах від Valkyrie
+  found: Знайдено
+  not_found: Не знайдено
+  hint: |
+    Перевіряє, чи BSSID (MAC-адреса бездротового інтерфейсу) маршрутизатора знайдена в базах даних від Valkyrie.
+    
+    Можливі варіанти:
+    
+     - **Знайдено** - BSSID знайдена в базі даних Valkyrie. Це означає, що місцезнаходження роутера може бути опубліковане в Інтернеті.
+     - **Не знайдено** - BSSID не знайдено в базі даних Valkyrie ... принаймні поки що.
+    
+    У будь-якому випадку, рекомендовано регулярно змінювати BSSID у роутерів, для яких безпека є важливою.
+    Якщо цього не робити, можливо, це допоможе виявити місцезнаходження підключених пристроїв.
+    Крім того, у випадку рухомого маршрутизатора, можна прослідкувати його маршрут.
+
+wifi:
+  setup: Налаштувати
+  setup_wifi: Налаштувати Wifi
+  network_name: Назва мережі
+  password: Пароль
+  skip: Пропустити
+  apply: Застосувати
+  bypass: Bypass
+  setup_ssid_and_password: Налаштувати SSID та пароль
+  keep_default_wifi_settings: STARLINK/без пароля
+  enable_bypass_mode: Увімкнути режим Bypass
+  setup_ssid_pass(ssid, pass): Ви обрали назву мережі "$ssid" та пароль "$pass". Вірно?
+  setup_default: Ви вирішили залишити назву мережі за замовчуванням "STARLINK" і без пароля. Вірно?
+  setup_bypass: Ви обрали активувати mypass mode. Роутер буде недоступний в цьому режимі аж до наступного апаратного скидання. Підтвердити?
+  more_8_chars: 8 символів або більше
+
+live:
+  starlink_live: Starlink Live
+  check_update: Перевірити оновлення
+  outages: Відключення
+  event_logs: Лог події
+  n_records_before(n): ... $n записів попереду ...
+
+header:
+  general: Загальне
+  signal: Сигнал
+  network: Мережа
+  alerts: Попередження
+  device_info: Про пристрій
+  config: Налаштування
+  gps_stats: GPS
+  antenna: Антена
+  ready_states: Готовність модулів
+  init_duration: Час ініціалізації (сек)
+  networks: Мережі
+  boot: Завантаження
+  client: Клієнт
+  features: Функції
+  connected_routers: Під'єднані роутери
+  actions: Операції
+
+tabs:
+  app:
+    unknown: Невідомо
+    app_version: Версія додатку
+    app_environment: Середовище додатку
+    app_build: Номер зборки додатку
+    app_hash: Хеш додатку
+    app_timestamp: Час додатку
+    platform_os: Операційна система платформи
+    platform_os_version: Версія операційної системи
+    device: Пристрій
+    device_model: Модель присторю
+    device_id: ID пристрою
+    device_timestamp: Час роботи пристрою
+    device_uptime: IP адреса WiFi
+    wifi_ip_address: WiFi IP address
+    local_connection_type: Local connection type
+    local_connection_speed: Local connection speed
+    is_vpn: Використовується VPN
+    is_connected: Підключено
+    internet_available: Інтернет присутній
+    connected_via_starlink: З'єднання через Starlink
+    starlink_router_bypass_mode: Starlink router bypass mode
+    local_ip_address: Локальна IP адреса
+    gateway_ip_address: IP адреса шлюзу
+    public_ip_address: Публічна IP адреса
+    wifi_ssid: WiFi SSID
+    wifi_bssid: WiFi BSSID
+    wifi_frequency: Частота WiFi
+    wifi_signal_strength: Рівень сигналу WiFi
+    sensors: Сенсори
+    available: Доступно
+    active: Активно
+online:
+  internet: Інтернет
+  starlink_internet: Інтернет через Starlink
+grpc:
+  possible_options__hint: |
+    Можливі варіанти:
+
+    - OTHER_OPTIONS
+  DeviceInfo:
+    id: Id
+    hardware_version: Версія апаратна
+    software_version: Версія прошивки
+    country_code: Код країни
+    utc_offset_s: UTC зміщення, с
+    software_partitions_equal: Software partitions equal
+    is_dev: Development hardware
+    bootcount: Boot count
+    anti_rollback_version: Anti-Rollback version
+    is_hitl: is_hitl
+    manufactured_version: Версія прошивки (з заводу)
+    generation_number: generation_number
+    dish_cohoused: Starlink cohoused
+    x_build_date: Дата прошивки
+    x_timezone: Часова зона
+  BootInfo:
+    last_reason: Остання причина
+    last_reason__hint: |
+      Можливі варіанти:
+
+      - **UNKNOWN**
+      - **FORGOTTEN** - Причину завантаження не зафіксовано.
+      - **POWER_CYCLE** - Пристрій було вимкнено та увімкнено.
+      - **COMMAND** - Перезавантаження за командою.
+      - **SOFTWARE_UPDATE** - Перезавантаження після оновлення прошивки.
+      - **CONFIG_UPDATE** - Перезавантаження після зміни конфігурації.
+      - **UPTIME_FDIR** - Перезавантаження через виявлення помилки uptime.
+      - **REPEATER_FDIR** - Перезавантаження через виявлення помилки ретранслятора.
+      - **AVIATION_ETH_WAN_FDIR** - Перезавантаження через помилку авіаційного Ethernet WAN.
+      - **KERNEL_PANIC** - Перезавантаження через kernel panic.
+      - **MCU_BRINGUP_FAILED_FDIR** - Перезавантаження через помилку ініціалізації MCU.
+      - **AVIATION_OUTAGE_FDIR** - Перезавантаження через авіаційний збій.
+      - **SOFTWARE_WATCHDOG** - Перезавантаження через програмний watchdog.
+      - **INTENTIONAL_KERNEL_PANIC** - Навмисний kernel panic для діагностики.
+      - **HARDWARE_WATCHDOG** - Перезавантаження через апаратний watchdog.
+      - **REPEATER_UNTRUSTED_FDIR** - Перезавантаження через ненадійний ретранслятор.
+  DishOutage:
+    cause: Причина
+    cause__hint: |
+      Причина, чому тарілка не на зв'язку. Можливі варіанти:
+      
+      - **UNKNOWN**
+      - **BOOTING** - Тарілка намагається ініціалізувати з'єднання з супутниками.
+        Не повинно висіти в такому стані занадто довго. Найбільше часу, зазвичай, займає пошук GPS.
+      - **STOWED** - Тарілка складена для упаковки та зберігання.
+      - **THERMAL_SHUTDOWN** - Тарілка перегріта. В режимі очікування до зниження температури.
+      - **NO_SCHEDULE**
+      - **NO_SATS** - Немає GPS сигналу.
+      - **OBSTRUCTED** - Забагато перешкод. Переконайтеся, що антена має кут огляду неба 140°
+         (принаймні в тій частині, куди вона зазвичай орієнтована).
+      - **NO_DOWNLINK** - Канал передачі даних з супутників не ініціалізовано.
+      - **NO_PINGS** - Тарілка не отримує пінгів від мережі.
+      - **ACTUATOR_ACTIVITY** - Приводи тарілки рухаються (нахил або обертання).
+      - **CABLE_TEST** - Тарілка виконує тест кабелю.
+      - **SLEEPING** - Тарілка в режимі сну (енергозбереження).
+      - **SKY_SEARCH** - Тарілка шукає супутники в небі.
+    start_timestamp_ns: Start timestamp, ns
+    duration_ns: Duration, ns
+    did_switch: Did switch
+  DishGpsStats:
+    gps_valid: GPS дійсний
+    gps_valid__hint: Чи отримала тарілка дійсний GPS-фікс.
+    gps_sats: GPS супутники
+    gps_sats__hint: Кількість GPS-супутників, які наразі бачить тарілка.
+    no_sats_after_ttff: Немає супутників після першого фіксу
+    no_sats_after_ttff__hint: Чи було втрачено видимість GPS-супутників після першого фіксу (TTFF). Може вказувати на проблеми з GPS-антеною.
+    inhibit_gps: Не довіряти GPS
+    inhibit_gps__hint: Чи ігнорується внутрішній GPS тарілки на користь альтернативного джерела місцезнаходження.
+  DishReadyStates:
+    cady: Тактовий генератор
+    scp: Інтерфейс шини RFFE
+    l1l2: Модем L1L2
+    xphy: Інтерфейс Xilinx XPHY
+    aap: Цифрові формувачі променя
+    rf: RF front end
+
+  DishInitDuration:
+    attitudeInitialization: Attitude initialization
+    attitudeInitialization_hint: Термінал зміг зрозуміти своє початкове положення (де верх, де низ, як він нахилений).
+    burstDetected: Burst  detected
+    burstDetected_hint: Термінл почув сигнал супутника Starlink.
+    ekfConverged: EKF converged
+    ekfConverged_hint: Термінал зміг зрозуміти своє початкове положення (схоже на Attitude initialization), але вже стабільне, все зійшлось і термінал вже точно впевнений як він повернутий.
+    firstCplane: First CPlane
+    firstCplane_hint:  Термінал отримав перший контрольний пакет даних від супутника.
+    firstPopPing: First PoP ping
+    firstPopPing_hint: Термінал вперше пропінгував Point of Presence на землі.
+    gpsValid: GPS valid
+    gpsValid_hint: GPS став валідним та видав точну позицію.
+    initialNetworkEntry: Initial network entry
+    initialNetworkEntry_hint: Термінал вперше під'єднався до мережі Starlink та почав комунікацію.
+    networkSchedule: Network schedule
+    networkSchedule_hint: Термінал отримав перший пакет даних з розкладом роботи соти.
+    rfReady: RF ready
+    rfReady_hint: Термінал виконав ініціалізацію антени без помилок по XPHY, RF, SCP, тощо.
+    stableConnection: Stable connection
+    stableConnection_hint: Термінал отримав стабільне з'єднання за мережею.
+
+  DishConfig:
+    snow_melt_mode: Snow melt mode
+    snow_melt_mode__hint: |
+      Можливі варіанти:
+
+      - **AUTO** - Тарілка автоматично розтоплює сніг при виявленні.
+      - **ALWAYS_ON** - Нагрівач для танення снігу завжди увімкнений.
+      - **ALWAYS_OFF** - Нагрівач для танення снігу завжди вимкнений.
+    location_request_mode: Location request mode
+    location_request_mode__hint: |
+      Можливі варіанти:
+       - **NONE** - Starlink не публікує своє місцезнаходження в локальну мережу.
+       - **LOCAL** - Starlink публікує своє місцезнаходження локальній мережі через DHCP та API.
+      
+      Щоб змінити це налаштування, вам потрібний оригінальний додаток Starlink з залогіненим обліковим записом,
+      доступом до Інтернету та доступом до Starlink. Ви можете знайти це налаштування в
+      *Advanced* -> *Debug Data* -> *Allow access on local network*.
+
+    level_dish_mode: Level dish mode
+    level_dish_mode__hint: |
+      Можливі варіанти:
+
+      - **TILT_LIKE_NORMAL** - Тарілка нахиляється як зазвичай для відстеження супутників.
+      - **FORCE_LEVEL** - Тарілка примусово залишається рівною (горизонтально).
+    power_save_start_minutes: Power save start minutes
+    power_save_duration_minutes: Power save duration minutes
+    power_save_mode: Power save mode
+    power_save_mode__hint: |-
+      Для Starlink можна налаштувати режим сну. Starlink не надає Інтернет і не топить сніг під час сну.
+
+  DishObstructionStats:
+    fraction_obstructed: Частка часу с перешкодами
+    fraction_obstructed__hint: Відсоток неба, закритого перешкодами від огляду тарілки. Чим менше, тим краще.
+    valid_s: Time valid
+    valid_s__hint: Тривалість, протягом якої дані про перешкоди збирались і вважаються дійсними.
+    currently_obstructed: Є перешкода
+    currently_obstructed__hint: Чи заблокований наразі сигнал тарілки перешкодою.
+    avg_prolonged_obstruction_duration_s: Середній час тривалих перешкод
+    avg_prolonged_obstruction_duration_s__hint: Середня тривалість тривалих перешкод сигналу.
+    avg_prolonged_obstruction_interval_s: Середній час між тривалими перешкодами
+    avg_prolonged_obstruction_interval_s__hint: Середній час між тривалими перешкодами.
+    avg_prolonged_obstruction_valid: Average prolonged obstruction valid
+    avg_prolonged_obstruction_valid__hint: Чи зібрано достатньо даних для надійної статистики тривалих перешкод.
+    time_obstructed: Тривалість перешкоди
+    time_obstructed__hint: Загальна частка часу, протягом якого сигнал тарілки був заблокований перешкодами.
+    patches_valid: Patches valid
+    patches_valid__hint: Чи містять патчі карти перешкод дійсні дані.
+  DishGetStatus:
+    uptime_s: Час після завантаження
+    uptime_s__hint: 'Час роботи тарілки від останнього перезавантаження.'
+    seconds_to_first_nonempty_slot: Час до першого непорожнього слота
+    seconds_to_first_nonempty_slot__hint: Час до наступного запланованого слота зв'язку тарілки з супутником.
+    fraction_obstructed: Частка часу с перешкодами
+    valid_s: valid_s
+    currently_obstructed: currently_obstructed
+    avg_prolonged_obstruction_duration_s: avg_prolonged_obstruction_duration_s
+    avg_prolonged_obstruction_interval_s: avg_prolonged_obstruction_interval_s
+    avg_prolonged_obstruction_valid: avg_prolonged_obstruction_valid
+    time_obstructed: time_obstructed
+    patches_valid: patches_valid
+    dlBandwidthRestrictedReason: Обмеження швидкості (download)
+    ulBandwidthRestrictedReason: Обмеження швидкості (upload)
+    downlink_throughput_bps: Downlink Throughput
+    uplink_throughput_bps: Uplink Throughput
+    pop_ping_drop_rate: PoP ping drop rate
+    pop_ping_latency_ms: PoP ping затримка
+    pop_ping__hint: |
+      Мережа Starlink, грубо кажучи, складається з таких компонентів:
+      - Користувацькі термінали (UT)
+      - Супутники (SAT)
+      - Наземні станції (які фізично з'єднуються з супутниками)
+      - Точки присутності (PoP) (що з'єднуються наемними станціями через оптоволокно та маршрутизують мережевий трафік в Інтернет)
+      
+      **PoP Ping Latency** вказує на час, необхідний для передачі пакета з користувацького терміналу до точки присутності і назад.
+      
+      **PoP Ping Drop Rate** вказує на частку пакетів, які втрачаються під час передачі між користувацьким терміналом та точкою присутності.
+    stow_requested: Складання в процесі
+    stow_requested__hint: Чи було надіслано команду складання. У складеному стані тарілка згортається для зберігання або транспортування.
+    boresight_azimuth_deg: Азимут осі панелі, град
+    boresight_azimuth_deg__hint: Горизонтальний кут компасу, в якому наразі спрямована антенна панель тарілки, в градусах.
+    boresight_elevation_deg: Кут підйому панелі, град
+    boresight_elevation_deg__hint: Вертикальний кут, під яким наразі спрямована антенна панель тарілки відносно горизонту, в градусах.
+    eth_speed_mbps: Швидкість Ethernet, Mbps
+    mobility_class: Клас мобільності
+    mobility_class__hint: |
+      Можливі варіанти:
+
+      - **STATIONARY** - Тарілка встановлена на фіксованому місці (домашнє використання).
+      - **NOMADIC** - Тарілку можна переміщувати між локаціями, але не використовувати під час руху.
+      - **MOBILE** - Тарілка використовується під час руху (човни, будинки на колесах тощо).
+    is_snr_above_noise_floor: SNR вище за рівень шуму
+    is_snr_above_noise_floor__hint: Чи перевищує відношення сигнал/шум мінімальний поріг, необхідний для надійного зв'язку.
+    class_of_service: Клас сервісу
+    class_of_service__hint: |
+      Можливі варіанти:
+
+      - **UNKNOWN**
+      - **CONSUMER** - Домашній план Starlink.
+      - **BUSINESS** - План Starlink Business.
+      - **BUSINESS_PLUS** - План Starlink Business Plus з підвищеним пріоритетом.
+      - **COMMERCIAL_AVIATION** - Авіаційний план Starlink для комерційних літаків.
+    software_update_state: Стан оновлення
+    software_update_state__hint: |
+      Можливі варіанти:
+
+      - **UNKNOWN**
+      - **IDLE** - Оновлення не виконується.
+      - **FETCHING** - Завантаження нового оновлення.
+      - **PRE_CHECK** - Виконання перевірок перед оновленням.
+      - **WRITING** - Запис оновлення на розділ.
+      - **POST_CHECK** - Перевірка після оновлення.
+      - **REBOOT_REQUIRED** - Оновлення готове, потрібне перезавантаження.
+      - **DISABLED** - Оновлення вимкнено.
+      - **FAULTED** - Помилка процесу оновлення.
+    is_snr_persistently_low: SNR стабільно низький
+    is_snr_persistently_low__hint: Чи було відношення сигнал/шум стабільно нижче допустимого рівня. Може вказувати на перешкоди або проблеми з обладнанням.
+    has_actuators: Наявність приводу
+    has_actuators__hint: Чи має тарілка моторизовані приводи для нахилу та обертання.
+    actuator_state: Стан приводів
+    actuator_state__hint: |
+      Можливі варіанти:
+
+      - **IDLE** - Приводи в стані спокою, тарілка в нормальній робочій позиції.
+      - **FULL_TILT** - Тарілка повністю нахилена.
+      - **ROTATE** - Тарілка обертається.
+      - **TILT** - Тарілка нахиляється.
+      - **UNWRAP_POSITIVE** - Тарілка розмотує кабелі в позитивному напрямку.
+      - **UNWRAP_NEGATIVE** - Тарілка розмотує кабелі в негативному напрямку.
+      - **TILT_TO_STOWED** - Тарілка нахиляється в складене (плоске) положення.
+      - **FAULTED** - Привід несправний, потребує уваги.
+      - **WAIT_TIL_STATIC** - Очікування, поки тарілка стане нерухомою.
+      - **DRIVE_TO_MOBILE_POSITION** - Переміщення в мобільну робочу позицію.
+      - **MOBILE_WAIT** - Очікування в мобільному режимі.
+    disablement_code: Стан сервісу
+    disablement_code__hint: |
+      Можливі варіанти:
+
+      - **UNKNOWN_STATE**
+      - **OKAY** - Сервіс працює нормально.
+      - **NO_ACTIVE_ACCOUNT** - Немає активного облікового запису Starlink для цієї тарілки.
+      - **TOO_FAR_FROM_SERVICE_ADDRESS** - Тарілка занадто далеко від зареєстрованої адреси обслуговування.
+      - **IN_OCEAN** - Розташування тарілки визначено як океан.
+      - **BLOCKED_COUNTRY** - Сервіс Starlink недоступний у цій країні.
+      - **DATA_OVERAGE_SANDBOX_POLICY** - Ліміт даних перевищено.
+      - **CELL_IS_DISABLED** - Стільник Starlink, що обслуговує цю зону, вимкнено.
+      - **ROAM_RESTRICTED** - Роумінг обмежений для цього плану або місця.
+      - **UNKNOWN_LOCATION** - Тарілка не може визначити своє місцезнаходження.
+      - **ACCOUNT_DISABLED** - Обліковий запис Starlink вимкнено.
+      - **UNSUPPORTED_VERSION** - Версія прошивки тарілки більше не підтримується.
+      - **MOVING_TOO_FAST_FOR_POLICY** - Тарілка рухається швидше, ніж дозволено планом обслуговування.
+      - **UNDER_AVIATION_FLYOVER_LIMITS** - Нижче авіаційних обмежень висоти прольоту.
+      - **BLOCKED_AREA** - Тарілка знаходиться в обмеженій або заблокованій зоні.
+    reboot_reason: Причина перезавантаження
+    reboot_reason__hint: |
+      Можливі варіанти:
+
+      - **NONE**
+      - **MANUAL** - Перезавантаження ініційоване користувачем вручну.
+      - **LOSS_OF_COMM** - Перезавантаження через втрату зв'язку з мережею.
+      - **SWUPDATE_NOW** - Негайне перезавантаження для оновлення.
+      - **SWUPDATE_SCHEDULED** - Заплановане перезавантаження для оновлення.
+      - **APP** - Перезавантаження через додаток Starlink.
+      - **EMC** - Перезавантаження через підсистему EMC.
+      - **FACTORY_RESET** - Перезавантаження після скидання до заводських налаштувань.
+      - **TEST_CASE** - Перезавантаження через тестовий сценарій.
+      - **THERMAL_POWER_CUT** - Перезавантаження через захист від перегріву.
+      - **CRITICAL_PROCESS_DIED** - Критичний процес завершився аварійно.
+      - **NO_RF_READY** - RF front end не вдалося ініціалізувати.
+      - **POSTPONED_LOSS_OF_COMM** - Відкладене перезавантаження після втрати зв'язку.
+      - **SWUPDATE_STATIONARY** - Оновлення прошивки в стаціонарному режимі.
+      - **AAP_CRASH** - Збій цифрового формувача променя (AAP).
+      - **XP70_SACS** - Збій підсистеми XP70 SACS.
+      - **INE_FAILED** - Помилка початкового входу в мережу.
+      - **KERNEL_TAINTED** - Ядро було забруднене (наприклад, помилка модуля).
+  AlignmentStats:
+    has_actuators: has_actuators
+    actuator_state: actuator_state
+    tilt_angle_deg: tilt_angle_deg
+    boresight_azimuth_deg: Panel boresight Azimuth angle, deg
+    boresight_elevation_deg: Panel boresight Elevation angle, deg
+    attitude_estimation_state: Attitude estimation state
+    attitude_estimation_state__hint: |
+      Можливі варіанти:
+
+      - **FILTER_RESET** - Фільтр орієнтації скинуто, оцінка ще не розпочата.
+      - **FILTER_UNCONVERGED** - Фільтр орієнтації працює, але ще не збігся.
+      - **FILTER_CONVERGED** - Фільтр орієнтації збігся, оцінка положення стабільна.
+      - **FILTER_FAULTED** - Помилка фільтра орієнтації.
+      - **FILTER_INVALID** - Стан фільтра орієнтації недійсний.
+    attitude_uncertainty_deg: Attitude uncertainty, deg
+    desired_boresight_azimuth_deg: Desired boresight Azimuth angle, deg
+    desired_boresight_azimuth_deg__hint: Цільовий горизонтальний напрямок, в якому тарілка повинна бути спрямована для оптимального зв'язку з супутниками, в градусах.
+    desired_boresight_elevation_deg: Desired boresight Elevation angle, deg
+    desired_boresight_elevation_deg__hint: Цільовий вертикальний кут, під яким тарілка повинна бути спрямована для оптимального зв'язку з супутниками, в градусах.
+  ClientName:
+    mac_address: mac_address
+    given_name: given_name
+  Network:
+    ipv4: ipv4
+    client_isolation: client_isolation
+    guest: guest
+    landing: landing
+    domain: domain
+    dhcpv4_start: dhcpv4_start
+  BasicServiceSet:
+    bssid: bssid
+    bssid__hint: |
+      Starlink BSSID спочатку починався з **74:24:9f**, але через проблеми з безпекою,
+       починаючи приблизно з січня 2023 року, маршрутизатори Starlink можуть обрати випадковий BSSID після скидання до заводських налаштувань.
+    ssid: ssid
+    band: band
+    disable: disable
+    hidden: hidden
+    iface_name: iface_name
+    auth: auth
+  WifiConfig:
+    country_code: Код країни
+    setup_complete: Налаштування завершено
+    version: Версія
+    channel_2ghz: channel_2ghz
+    channel_5ghz: channel_5ghz
+    is_repeater: is_repeater
+    boot_count: Кількість завантаженнь
+    string: string
+    bypass_mode: bypass_mode
+    apply_dynamic_keys: apply_dynamic_keys
+    dfs_enabled: dfs_enabled
+    incarnation: incarnation
+    wireless_mode_2ghz: wireless_mode_2ghz
+    wireless_mode_5ghz: wireless_mode_5ghz
+    ht_bandwidth_2ghz: ht_bandwidth_2ghz
+    ht_bandwidth_5ghz: ht_bandwidth_5ghz
+    vht_bandwidth: vht_bandwidth
+    is_aviation: is_aviation
+    secure_dns: secure_dns
+    ap_mode: ap_mode
+    disable_mesh_onboarding: disable_mesh_onboarding
+    pin_country_code: pin_country_code
+    custom_power_table: custom_power_table
+    use_public_services: use_public_services
+    disable_automated_speedtests: disable_automated_speedtests
+    channel_5ghz_high: channel_5ghz_high
+    wireless_mode_5ghz_high: wireless_mode_5ghz_high
+    ht_bandwidth_5ghz_high: ht_bandwidth_5ghz_high
+    vht_bandwidth_5ghz_high: vht_bandwidth_5ghz_high
+    enable_umbilical_vlan: enable_umbilical_vlan
+    outdoor_mode: outdoor_mode
+    disable_2ghz: disable_2ghz
+    disable_5ghz: disable_5ghz
+    disable_5ghz_high: disable_5ghz_high
+    disable_x_mesh_backhaul: disable_x_mesh_backhaul
+    tx_power_level_2ghz: tx_power_level_2ghz
+    tx_power_level_5ghz: tx_power_level_5ghz
+    tx_power_level_5ghz_high: tx_power_level_5ghz_high
+  PingMetrics:
+    in_unhappy_hour_2s: in_unhappy_hour_2s
+    in_unhappy_hour_5s: in_unhappy_hour_5s
+    drop_rate_5m: drop_rate_5m
+    latency_5m: latency_5m
+  RxTxStats:
+    bytes: bytes
+    count_errors: count_errors
+    nss: nss
+    mcs: mcs
+    bandwidth: bandwidth
+    guard_ns: guard_ns
+    rate_mbps: rate_mbps
+    airtime_fraction_last_1s: airtime_fraction_last_1s
+    sampled_packets: sampled_packets
+    sampled_packets_retried: sampled_packets_retried
+    sampled_packets_dropped: sampled_packets_dropped
+    phy_mode: phy_mode
+    success_bytes: success_bytes
+  WifiClient:
+    name: name
+    mac_address: MAC адреса
+    ip_address: IP адреса
+    signal_strength: Рівень сигналу
+    rx_stats: rx_stats
+    tx_stats: tx_stats
+    associated_time_s: Associated time, s
+    mode_str: mode_str
+    iface: Інтерфейс
+    snr: Signal to noise
+    psmode: psmode
+    channel_width: channel_width
+    upstream_mac_address: upstream_mac_address
+    role: Role
+    device_id: device_id
+    swq_checks: swq_checks
+    swq_checks_non_empty: swq_checks_non_empty
+    mib_steer_state: mib_steer_state
+    mib_steer_method: mib_steer_method
+    btm_requests: btm_requests
+    btm_requests_success: btm_requests_success
+    domain: domain
+    dot11v_support: dot11v_support
+    iface_name: iface_name
+    steer_req_success_last_1h: steer_req_success_last_1h
+    steer_req_fail_last_1h: steer_req_fail_last_1h
+    steer_req_fail_and_dissoc_last_1h: steer_req_fail_and_dissoc_last_1h
+    steer_state: steer_state
+    given_name: given_name
+    hops_from_controller: hops_from_controller
+    est_tx_rate_mbps_from_controller: est_tx_rate_mbps_from_controller
+    est_rx_rate_mbps_from_controller: est_rx_rate_mbps_from_controller
+    hardware_version: hardware_version
+    software_version: software_version
+    api_version: api_version
+    ping_metrics: ping_metrics
+    ipv6_addresses: IPv6 адреси
+    x_rx_bytes: Received
+    x_tx_bytes: Transmitted
+  WifiGetStatus:
+    captive_portal_enabled: Captive portal enabled
+    uptime_s: Час після завантаження
+    ipv4_wan_address: WAN IPv4
+    ping_drop_rate: Ping drop rate
+    ping_latency_ms: Ping latency, ms
+    is_aviation: Aviation
+    dish_ping_drop_rate: Dish ping drop rate
+    dish_ping_latency_ms: Dish ping latency, ms
+    pop_ping_drop_rate: PoP ping drop rate
+    pop_ping_latency_ms: PoP ping latency
+    is_aviation_conformed: Aviation conformed
+    ipv6_wan_addresses: WAN IPv6
+    dish_ping_drop_rate_5m: Dish ping drop rate, 5m
+    has_client_index: has_client_index
+    client_index: client_index

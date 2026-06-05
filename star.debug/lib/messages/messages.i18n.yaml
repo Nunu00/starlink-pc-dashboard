@@ -1,0 +1,672 @@
+
+general:
+  lang: 'English'
+  app_name: 'Star Debug'
+  language: Language
+  close: Close
+  cancel: Cancel
+  next: Next
+  back: Back
+  save: Save
+  no_changes: No changes
+  try_again: Try again
+  loading: Loading ...
+  loading_error: Loading error occurred
+  error_occured: Error occurred
+  refresh: Refresh
+  copied_to_clipboard: Copied to clipboard
+  confirm: Confirm
+  reject: Reject
+  no_items: No items
+  got_it: Got it
+  ok: OK
+  select_lang: Select language
+  change_language: Change language
+  dish: Dish
+  router: Router
+  security: Security
+  device_app: Device App
+  open_json_file: Open JSON file
+  open_clipboard: Open JSON from the clipboard
+  debug_data_viewer: Debug Data Viewer
+  no_data_found: No data found
+  dark_mode: Dark mode
+  online: Online
+  version: Version
+  charts: Charts
+  save_debug_data: Save Debug Data
+  to_clipboard: To Clipboard
+  to_file: To File
+  save_as: Save As
+  share: Share
+  view_in_app: View in the app
+  reboot: Reboot
+  stow: Stow
+  unstow: Unstow
+  inhibit_gps: Inhibit GPS
+  uninhibit_gps: Uninhibit GPS
+  dump_created_time: Dump created time
+  no_alerts: No alerts
+  confirmation: Confirmation
+  just_now: Just now
+  x_min_ago(t): ${t}m ago
+  x_hours_ago(t): ${t}h ago
+  x_days_ago(t): ${t}d ago
+  should_not_be_empty: Should not be empty
+  yes: yes
+  no: no
+  not_specified: not specified
+
+recent:
+  search: Search
+  no_options: No options to show
+
+my:
+  my_starlinks: My Starlinks
+  snapshots: Snapshots
+  delete_snapshot_prompt(id, ts): Do you want to delete snapshot of dish $id for $ts?
+  delete_all_snapshots_but_last_prompt(id): Do you want to delete ALL snapshots of dish $id but last?
+  delete_dish_prompt(id): Do you want to delete dish $id?
+  delete_all_dished_prompt: Do you want to delete data for ALL dishes?
+
+about:
+  about: About
+  about_starlink_for_ukraine: About Narodnyi Starlink
+  starlink_for_ukraine: Narodnyi Starlink
+  starlink_for_ukraine_in_fb: Narodnyi Starlink on Facebook
+  about_text: |
+    This application was created as part of the volunteer initiative "**Narodnyi Starlink**" for the needs 
+    of people who care about the availability of communications even in the places where 
+    the russian aggressor is trying to turn cities into ashes.
+  project_on_github: Project on GitHub
+
+settings:
+  settings: Settings
+  auto_store_dish_log: Autostore snapshots
+  auto_store_dish_log_sub: Store snapshots automatically from Starlink Live in My Starlinks
+
+valkyrie:
+  valkyrie_check: Valkyrie Check
+  valkyrie_check_sub: Checks whether router BSSID (wireless MAC address) is found in databases from Valkyrie.
+  found: Found
+  not_found: Not found
+  hint: |
+    Checks whether router BSSID (wireless MAC address) is found in databases from Valkyrie.
+    
+    The possible options are:
+    
+      - **Found** - BSSID is found in the Valkyrie database. It means its location can be exposed online. 
+      - **Not found** - BSSID is not found in the Valkyrie database ... at least not yet.   
+
+    In any case, it is recommended to change BSSID regularly for security-critical usage. 
+    If not, it may help to expose the location of connected devices. 
+    Moreover, in the case of a moving router, its route can be followed.
+wifi:
+  setup: Setup
+  setup_wifi: Setup Wifi
+  network_name: Network name
+  password: Network password
+  skip: Skip
+  apply: Apply
+  bypass: Bypass
+  setup_ssid_and_password: Setup SSID and password
+  keep_default_wifi_settings: STARLINK/no password
+  enable_bypass_mode: Enable bypass mode
+  setup_ssid_pass(ssid, pass): You have selected network name "$ssid" and password "$pass". Confirm?
+  setup_default: You have selected to leave the default network name "STARLINK" and no password. Confirm?
+  setup_bypass: You have selected to enable bypass mode. The router will be not accessible in this mode until the next hardware reset. Confirm?
+  more_8_chars: 8 chars or more
+
+live:
+  starlink_live: "Starlink Live"
+  check_update: Check Update
+  outages: Outages
+  event_logs: Event Logs
+  n_records_before(n): ... $n records before ...
+
+header:
+  general: General
+  signal: Signal
+  network: Network
+  alerts: Alerts
+  device_info: Device Info
+  config: Config
+  gps_stats: GPS Stats
+  antenna: Antenna
+  ready_states: Ready States
+  init_duration: Initialization duration (sec)
+  networks: Networks
+  boot: Boot
+  client: Client
+  features: Features
+  connected_routers: Connected routers
+  actions: Actions
+
+tabs:
+  app:
+    unknown: Unknown
+    app_version: App version
+    app_environment: App environment
+    app_build: App build
+    app_hash: App hash
+    app_timestamp: App timestamp
+    platform_os: Platform OS
+    platform_os_version: Platform OS version
+    device: Device
+    device_model: Device model
+    device_id: Device id
+    device_timestamp: Device timestamp
+    device_uptime: Device uptime
+    wifi_ip_address: WiFi IP address
+    local_connection_type: Local connection type
+    local_connection_speed: Local connection speed
+    is_vpn: Is VPN
+    is_connected: Is connected
+    internet_available: Internet available
+    connected_via_starlink: Connected via Starlink
+    starlink_router_bypass_mode: Starlink router bypass mode
+    local_ip_address: Local IP address
+    gateway_ip_address: Gateway IP address
+    public_ip_address: Public IP address
+    wifi_ssid: WiFi SSID
+    wifi_bssid: WiFi BSSID
+    wifi_frequency: WiFi frequency
+    wifi_signal_strength: WiFi signal strength
+    sensors: Sensors
+    available: Available
+    active: Active
+
+
+online:
+  internet: Internet
+  starlink_internet: Starlink Internet
+
+grpc:
+  possible_options__hint: |
+    The possible options are:
+
+    - OTHER_OPTIONS
+  DeviceInfo:
+    id: Id
+    hardware_version: Hardware revision
+    software_version: Software version
+    country_code: Country code
+    utc_offset_s: UTC offset, s
+    software_partitions_equal: Software partitions equal
+    is_dev: Development hardware
+    bootcount: Boot count
+    anti_rollback_version: Anti-Rollback version
+    is_hitl: is_hitl
+    manufactured_version: Software version (manufactured)
+    generation_number: Generation number
+    dish_cohoused: Starlink cohoused
+
+    x_build_date: Build date
+    x_timezone: Timezone
+
+  BootInfo:
+#    count_by_reason: Count by reason
+    last_reason: Last reason
+    last_reason__hint: |
+      The possible options are:
+
+      - **UNKNOWN**
+      - **FORGOTTEN** - Boot reason was not recorded.
+      - **POWER_CYCLE** - Device was power cycled.
+      - **COMMAND** - Reboot was commanded.
+      - **SOFTWARE_UPDATE** - Reboot after a software update.
+      - **CONFIG_UPDATE** - Reboot after a configuration update.
+      - **UPTIME_FDIR** - Reboot triggered by uptime fault detection.
+      - **REPEATER_FDIR** - Reboot triggered by repeater fault detection.
+      - **AVIATION_ETH_WAN_FDIR** - Reboot triggered by aviation Ethernet WAN fault detection.
+      - **KERNEL_PANIC** - Reboot due to a kernel panic.
+      - **MCU_BRINGUP_FAILED_FDIR** - Reboot because MCU bringup failed.
+      - **AVIATION_OUTAGE_FDIR** - Reboot triggered by aviation outage fault detection.
+      - **SOFTWARE_WATCHDOG** - Reboot triggered by software watchdog.
+      - **INTENTIONAL_KERNEL_PANIC** - Intentional kernel panic for diagnostics.
+      - **HARDWARE_WATCHDOG** - Reboot triggered by hardware watchdog.
+      - **REPEATER_UNTRUSTED_FDIR** - Reboot triggered by untrusted repeater fault detection.
+#    last_count: Last count
+#    count_by_reason_delta: Count by reason delta
+
+#  DishAlerts:
+#    motors_stuck: motors_stuck
+#    thermal_shutdown: thermal_shutdown
+#    thermal_throttle: thermal_throttle
+#    unexpected_location: unexpected_location
+#    mast_not_near_vertical: mast_not_near_vertical
+#    slow_ethernet_speeds: slow_ethernet_speeds
+#    roaming: roaming
+#    install_pending: install_pending
+#    is_heating: is_heating
+#    power_supply_thermal_throttle: power_supply_thermal_throttle
+#    is_power_save_idle: is_power_save_idle
+#    moving_while_not_mobile: moving_while_not_mobile
+#    moving_fast_while_not_aviation: moving_fast_while_not_aviation
+
+  DishOutage:
+    cause: Cause
+    cause__hint: |
+      The reason why the dish is offline. The possible options are:
+
+      - **UNKNOWN**
+      - **BOOTING** - Dish is trying to initialize a satellite connection.
+        Should not hang in this state for too long. Most of the time, it is waiting for GPS.
+      - **STOWED** - The dish is stowed to be packaged for storage.
+      - **THERMAL_SHUTDOWN** - Dish is overheated. Waiting to cool down.
+      - **NO_SCHEDULE**
+      - **NO_SATS** - No enough GPS signal received.
+      - **OBSTRUCTED** - Too many signal obstructions. Ensure the dish has a 140° view of the sky
+        (at least in the part, where it is usually oriented).
+      - **NO_DOWNLINK** - No downlink from satellites is established.
+      - **NO_PINGS** - The dish is not receiving any pings from the network.
+      - **ACTUATOR_ACTIVITY** - The dish actuators are moving (tilting or rotating).
+      - **CABLE_TEST** - The dish is performing a cable diagnostics test.
+      - **SLEEPING** - The dish is in power save (sleep) mode.
+      - **SKY_SEARCH** - The dish is searching the sky for satellites.
+    start_timestamp_ns: Start timestamp, ns
+    duration_ns: Duration, ns
+    did_switch: Did switch
+
+  DishGpsStats:
+    gps_valid: GPS valid
+    gps_valid__hint: Whether the dish has acquired a valid GPS fix.
+    gps_sats: GPS satellites
+    gps_sats__hint: Number of GPS satellites currently visible to the dish.
+    no_sats_after_ttff: No GPS satellites after a first fix
+    no_sats_after_ttff__hint: Whether GPS satellite visibility was lost after Time To First Fix (TTFF). May indicate GPS antenna issues.
+    inhibit_gps: Don't trust Dishy's GPS
+    inhibit_gps__hint: Whether the dish's internal GPS is being ignored in favor of an alternative location source.
+
+  DishReadyStates:
+    cady: Clock generator
+    scp: RFFE bus interface
+    l1l2: Modem L1L2
+    xphy: Xilinx XPHY interface
+    aap: Digital beamformers
+    rf: RF front end
+
+  DishInitDuration:
+    attitudeInitialization: Attitude initialization
+    attitudeInitialization_hint: The terminal was able to understand its initial position (where is the top, where is the bottom, how it is tilted).
+    burstDetected: Burst detected
+    burstDetected_hint: The terminal heard the signal of the Starlink satellite.
+    ekfConverged: EKF converged
+    ekfConverged_hint: The terminal was able to understand its initial position (similar to Attitude initialization), but it is already stable, everything has converged and the terminal is already sure how it is turned.
+    firstCplane: First CPlane
+    firstCplane_hint: The terminal received the first control data packet from the satellite.
+    firstPopPing: First PoP ping
+    firstPopPing_hint: The terminal pinged the Point of Presence on the ground for the first time.
+    gpsValid: GPS valid
+    gpsValid_hint: GPS became a valid GPS and gave an accurate position.
+    initialNetworkEntry: Initial network entry
+    initialNetworkEntry_hint: The terminal has connected to the Starlink network for the first time and started communication.
+    networkSchedule: Network schedule
+    networkSchedule_hint: The terminal has received the first data packet with the cell schedule.
+    rfReady: RF ready
+    rfReady_hint: The terminal has completed antenna initialization without errors in XPHY, RF, SCP, etc.
+    stableConnection: Stable connection
+    stableConnection_hint: The terminal has received a stable connection to the network.
+
+  DishConfig:
+    snow_melt_mode: Snow melt mode
+    snow_melt_mode__hint: |
+      The possible options are:
+
+      - **AUTO** - The dish automatically melts snow when detected.
+      - **ALWAYS_ON** - Snow melting heater is always on.
+      - **ALWAYS_OFF** - Snow melting heater is always off.
+    location_request_mode: Location request mode
+    location_request_mode__hint: |
+      The possible options are:
+      - **NONE** - Starlink does not expose its location to the local network.
+      - **LOCAL** - Starlink exposes its location to the local network via DHCP and dish API.
+      
+      In order to change this setting, you need the original Starlink app with a logged-in account 
+      with internet access and dish access. You can find this setting in 
+      *Advanced* -> *Debug Data* -> *Allow access on local network*.
+
+    level_dish_mode: Level dish mode
+    level_dish_mode__hint: |
+      The possible options are:
+
+      - **TILT_LIKE_NORMAL** - The dish tilts normally to track satellites.
+      - **FORCE_LEVEL** - The dish is forced to stay level (horizontal).
+    power_save_start_minutes: Power save start minutes
+    power_save_duration_minutes: Power save duration minutes
+    power_save_mode: Power save mode
+    power_save_mode__hint: |-
+      You can set a sleep mode for your Starlink. Starlink won't provide Internet or melt snow while sleeping.
+
+  DishObstructionStats:
+    fraction_obstructed: Fraction obstructed
+    fraction_obstructed__hint: Percentage of the sky obstructed from the dish's view. Lower is better.
+    valid_s: Time valid
+    valid_s__hint: Duration for which obstruction data has been collected and is considered valid.
+    currently_obstructed: Currently obstructed
+    currently_obstructed__hint: Whether the dish signal is currently blocked by an obstruction.
+    avg_prolonged_obstruction_duration_s: "Average prolonged obstruction duration"
+    avg_prolonged_obstruction_duration_s__hint: Average duration of prolonged signal obstructions.
+    avg_prolonged_obstruction_interval_s: "Average prolonged obstruction interval"
+    avg_prolonged_obstruction_interval_s__hint: Average time between prolonged obstructions.
+    avg_prolonged_obstruction_valid: Average prolonged obstruction valid
+    avg_prolonged_obstruction_valid__hint: Whether enough data has been collected for prolonged obstruction statistics to be reliable.
+    time_obstructed: Time obstructed
+    time_obstructed__hint: Total fraction of time the dish signal has been obstructed.
+    patches_valid: Patches valid
+    patches_valid__hint: Whether the obstruction map patches contain valid data.
+
+  DishGetStatus:
+    uptime_s: Uptime
+    uptime_s__hint: Time the dish has been running since the last reboot.
+    seconds_to_first_nonempty_slot: Seconds to first non-empty slot
+    seconds_to_first_nonempty_slot__hint: Time until the dish has its next scheduled communication slot with a satellite.
+    fraction_obstructed: fraction_obstructed
+    valid_s: valid_s
+    currently_obstructed: currently_obstructed
+    avg_prolonged_obstruction_duration_s: avg_prolonged_obstruction_duration_s
+    avg_prolonged_obstruction_interval_s: avg_prolonged_obstruction_interval_s
+    avg_prolonged_obstruction_valid: avg_prolonged_obstruction_valid
+    time_obstructed: time_obstructed
+    patches_valid: patches_valid
+    dlBandwidthRestrictedReason: Bandwidth restriction (download)
+    ulBandwidthRestrictedReason: Bandwidth restriction (upload)
+
+    downlink_throughput_bps: Downlink Throughput
+    uplink_throughput_bps: Uplink Throughput
+    pop_ping_drop_rate: PoP ping drop rate
+    pop_ping_latency_ms: PoP ping latency
+    pop_ping__hint: |
+      The Starlink network comprises the following components:
+      - User Terminals (UT)
+      - Satellites (SAT)
+      - Ground Stations (which physically connect with satellites)
+      - Points of Presence (PoP) (connecting with ground stations via fiber, and routing network traffic to the Internet)
+      
+      **PoP Ping Latency** refers to the time taken for a packet to be transmitted from the User Terminal to a Point of Presence and back.
+      
+      **PoP Ping Drop Rate** indicates the fraction of packets lost during transmission between the User Terminal and a Point of Presence.
+
+    stow_requested: Stow requested
+    stow_requested__hint: Whether a stow command has been sent. When stowed, the dish folds flat for storage or transport.
+    boresight_azimuth_deg: Panel boresight Azimuth angle, deg
+    boresight_azimuth_deg__hint: The horizontal compass direction the dish antenna panel is currently pointing, in degrees.
+    boresight_elevation_deg: Panel boresight Elevation angle, deg
+    boresight_elevation_deg__hint: The vertical angle the dish antenna panel is currently pointing above the horizon, in degrees.
+
+    eth_speed_mbps: Ethernet speed, Mbps
+    mobility_class: Mobility class
+    mobility_class__hint: |
+      The possible options are:
+
+      - **STATIONARY** - The dish is installed at a fixed location (residential use).
+      - **NOMADIC** - The dish can be moved between locations but is not used while in motion.
+      - **MOBILE** - The dish is used while in motion (boats, RVs, etc.).
+    is_snr_above_noise_floor: SNR above the noise floor
+    is_snr_above_noise_floor__hint: Whether the Signal-to-Noise Ratio is above the minimum threshold required for reliable communication.
+
+    class_of_service: Class of service
+    class_of_service__hint: |
+      The possible options are:
+
+      - **UNKNOWN**
+      - **CONSUMER** - Residential Starlink plan.
+      - **BUSINESS** - Starlink Business plan.
+      - **BUSINESS_PLUS** - Starlink Business Plus plan with higher priority.
+      - **COMMERCIAL_AVIATION** - Starlink Aviation plan for commercial aircraft.
+    software_update_state: Software update state
+    software_update_state__hint: |
+      The possible options are:
+
+      - **UNKNOWN**
+      - **IDLE** - No software update is in progress.
+      - **FETCHING** - Downloading a new software update.
+      - **PRE_CHECK** - Running pre-update checks.
+      - **WRITING** - Writing the update to the partition.
+      - **POST_CHECK** - Running post-update verification.
+      - **REBOOT_REQUIRED** - Update is ready, reboot is needed to apply.
+      - **DISABLED** - Software updates are disabled.
+      - **FAULTED** - Software update process has faulted.
+    is_snr_persistently_low: SNR persistently low
+    is_snr_persistently_low__hint: Whether the Signal-to-Noise Ratio has been consistently below acceptable levels. May indicate obstructions or hardware issues.
+    has_actuators: Actuators
+    has_actuators__hint: Whether the dish has motorized actuators for tilting and rotating.
+    actuator_state: Actuators state
+    actuator_state__hint: |
+      The possible options are:
+
+      - **IDLE** - Actuators are idle, dish is in normal operating position.
+      - **FULL_TILT** - Dish is fully tilted.
+      - **ROTATE** - Dish is rotating.
+      - **TILT** - Dish is tilting.
+      - **UNWRAP_POSITIVE** - Dish is unwrapping cables in positive direction.
+      - **UNWRAP_NEGATIVE** - Dish is unwrapping cables in negative direction.
+      - **TILT_TO_STOWED** - Dish is tilting to stowed (flat) position.
+      - **FAULTED** - Actuator has faulted and needs attention.
+      - **WAIT_TIL_STATIC** - Waiting until the dish is static before moving.
+      - **DRIVE_TO_MOBILE_POSITION** - Driving to mobile operating position.
+      - **MOBILE_WAIT** - Waiting in mobile mode.
+    disablement_code: Service state
+    disablement_code__hint: |
+      The possible options are:
+
+      - **UNKNOWN_STATE**
+      - **OKAY** - Service is operating normally.
+      - **NO_ACTIVE_ACCOUNT** - No active Starlink account is associated with this dish.
+      - **TOO_FAR_FROM_SERVICE_ADDRESS** - The dish is too far from the registered service address.
+      - **IN_OCEAN** - The dish location is detected as being in the ocean.
+      - **BLOCKED_COUNTRY** - Starlink service is not available in this country.
+      - **DATA_OVERAGE_SANDBOX_POLICY** - Data cap exceeded under sandbox policy.
+      - **CELL_IS_DISABLED** - The Starlink cell serving this area is disabled.
+      - **ROAM_RESTRICTED** - Roaming is restricted for this plan or location.
+      - **UNKNOWN_LOCATION** - The dish cannot determine its location.
+      - **ACCOUNT_DISABLED** - The Starlink account has been disabled.
+      - **UNSUPPORTED_VERSION** - The dish software version is no longer supported.
+      - **MOVING_TOO_FAST_FOR_POLICY** - The dish is moving faster than allowed by the service plan.
+      - **UNDER_AVIATION_FLYOVER_LIMITS** - Under aviation flyover altitude limits.
+      - **BLOCKED_AREA** - The dish is in a restricted or blocked area.
+    reboot_reason: Reboot reason
+    reboot_reason__hint: |
+      The possible options are:
+
+      - **NONE**
+      - **MANUAL** - Reboot was triggered manually by the user.
+      - **LOSS_OF_COMM** - Reboot due to loss of communication with the network.
+      - **SWUPDATE_NOW** - Immediate software update reboot.
+      - **SWUPDATE_SCHEDULED** - Scheduled software update reboot.
+      - **APP** - Reboot requested by the Starlink app.
+      - **EMC** - Reboot triggered by EMC (electromagnetic compatibility) subsystem.
+      - **FACTORY_RESET** - Reboot after factory reset.
+      - **TEST_CASE** - Reboot triggered by a test case.
+      - **THERMAL_POWER_CUT** - Reboot due to thermal power cut protection.
+      - **CRITICAL_PROCESS_DIED** - A critical process crashed, forcing a reboot.
+      - **NO_RF_READY** - RF front end failed to initialize.
+      - **POSTPONED_LOSS_OF_COMM** - Postponed reboot after loss of communication.
+      - **SWUPDATE_STATIONARY** - Software update reboot while stationary.
+      - **AAP_CRASH** - Digital beamformer (AAP) crash.
+      - **XP70_SACS** - XP70 SACS subsystem failure.
+      - **INE_FAILED** - Initial network entry failed.
+      - **KERNEL_TAINTED** - The kernel was tainted (e.g. by a module error).
+  AlignmentStats:
+    has_actuators: has_actuators
+    actuator_state: actuator_state
+    tilt_angle_deg: tilt_angle_deg
+    boresight_azimuth_deg: Panel boresight Azimuth angle, deg
+    boresight_elevation_deg: Panel boresight Elevation angle, deg
+    attitude_estimation_state: Attitude estimation state
+    attitude_estimation_state__hint: |
+      The possible options are:
+
+      - **FILTER_RESET** - Attitude filter has been reset, not yet estimating.
+      - **FILTER_UNCONVERGED** - Attitude filter is running but has not yet converged.
+      - **FILTER_CONVERGED** - Attitude filter has converged, position estimation is stable.
+      - **FILTER_FAULTED** - Attitude filter has faulted.
+      - **FILTER_INVALID** - Attitude filter state is invalid.
+    attitude_uncertainty_deg: Attitude uncertainty, deg
+    desired_boresight_azimuth_deg: Desired boresight Azimuth angle, deg
+    desired_boresight_azimuth_deg__hint: The target horizontal direction the dish should point to for optimal satellite communication, in degrees.
+    desired_boresight_elevation_deg: Desired boresight Elevation angle, deg
+    desired_boresight_elevation_deg__hint: The target vertical angle the dish should point to for optimal satellite communication, in degrees.
+
+  ClientName:
+    mac_address: mac_address
+    given_name: given_name
+  Network:
+    ipv4: ipv4
+    client_isolation: client_isolation
+    guest: guest
+    landing: landing
+    domain: domain
+    dhcpv4_start: dhcpv4_start
+  BasicServiceSet:
+    bssid: bssid
+    bssid__hint: |
+      Starlink BSSID originally starts with **74:24:9f**, but due to security concerns, 
+      starting from approximately January 2023, Starlink routers are able to pick random BSSID on factory reset.
+    ssid: ssid
+    band: band
+    disable: disable
+    hidden: hidden
+    iface_name: iface_name
+    auth: auth
+
+  WifiConfig:
+    country_code: Country code
+    setup_complete: Setup complete
+    version: Version
+    channel_2ghz: channel_2ghz
+    channel_5ghz: channel_5ghz
+#  repeated .SpaceX.API.Device.PublicKey dynamic_keys = 22;
+    is_repeater: is_repeater
+    boot_count: Boot count
+    string: string
+    bypass_mode: bypass_mode
+#  map<string, .SpaceX.API.Device.MeshConfig> mesh_configs = 33;
+    apply_dynamic_keys: apply_dynamic_keys
+    dfs_enabled: dfs_enabled
+    incarnation: incarnation
+    wireless_mode_2ghz: wireless_mode_2ghz
+    wireless_mode_5ghz: wireless_mode_5ghz
+    ht_bandwidth_2ghz: ht_bandwidth_2ghz
+    ht_bandwidth_5ghz: ht_bandwidth_5ghz
+    vht_bandwidth: vht_bandwidth
+    is_aviation: is_aviation
+    secure_dns: secure_dns
+    ap_mode: ap_mode
+    disable_mesh_onboarding: disable_mesh_onboarding
+    pin_country_code: pin_country_code
+    custom_power_table: custom_power_table
+    use_public_services: use_public_services
+    disable_automated_speedtests: disable_automated_speedtests
+    channel_5ghz_high: channel_5ghz_high
+    wireless_mode_5ghz_high: wireless_mode_5ghz_high
+    ht_bandwidth_5ghz_high: ht_bandwidth_5ghz_high
+    vht_bandwidth_5ghz_high: vht_bandwidth_5ghz_high
+    enable_umbilical_vlan: enable_umbilical_vlan
+    outdoor_mode: outdoor_mode
+    disable_2ghz: disable_2ghz
+    disable_5ghz: disable_5ghz
+    disable_5ghz_high: disable_5ghz_high
+    disable_x_mesh_backhaul: disable_x_mesh_backhaul
+    tx_power_level_2ghz: tx_power_level_2ghz
+    tx_power_level_5ghz: tx_power_level_5ghz
+    tx_power_level_5ghz_high: tx_power_level_5ghz_high
+#  map<string, .SpaceX.API.Device.MeshConfig> mesh_configs_updates = 3033;
+
+  PingMetrics:
+    in_unhappy_hour_2s: in_unhappy_hour_2s
+    in_unhappy_hour_5s: in_unhappy_hour_5s
+    drop_rate_5m: drop_rate_5m
+    latency_5m: latency_5m
+
+  RxTxStats:
+    #RX
+    bytes: bytes
+    count_errors: count_errors
+    nss: nss
+    mcs: mcs
+    bandwidth: bandwidth
+    guard_ns: guard_ns
+    rate_mbps: rate_mbps
+    airtime_fraction_last_1s: airtime_fraction_last_1s
+    sampled_packets: sampled_packets
+    sampled_packets_retried: sampled_packets_retried
+    sampled_packets_dropped: sampled_packets_dropped
+    phy_mode: phy_mode
+
+    #TX
+    success_bytes: success_bytes
+
+  WifiClient:
+    name: name
+    mac_address: MAC address
+    ip_address: IP address
+    signal_strength: Signal strength
+    rx_stats: rx_stats
+    tx_stats: tx_stats
+    associated_time_s: Associated time, s
+    mode_str: mode_str
+    iface: Interface
+    snr: Signal to noise
+    psmode: psmode
+    channel_width: channel_width
+    upstream_mac_address: upstream_mac_address
+    role: Role
+    device_id: device_id
+    swq_checks: swq_checks
+    swq_checks_non_empty: swq_checks_non_empty
+    mib_steer_state: mib_steer_state
+    mib_steer_method: mib_steer_method
+    btm_requests: btm_requests
+    btm_requests_success: btm_requests_success
+    domain: domain
+    dot11v_support: dot11v_support
+    iface_name: iface_name
+    steer_req_success_last_1h: steer_req_success_last_1h
+    steer_req_fail_last_1h: steer_req_fail_last_1h
+    steer_req_fail_and_dissoc_last_1h: steer_req_fail_and_dissoc_last_1h
+    steer_state: steer_state
+    given_name: given_name
+    hops_from_controller: hops_from_controller
+    est_tx_rate_mbps_from_controller: est_tx_rate_mbps_from_controller
+    est_rx_rate_mbps_from_controller: est_rx_rate_mbps_from_controller
+    hardware_version: hardware_version
+    software_version: software_version
+    api_version: api_version
+    ping_metrics: ping_metrics
+    ipv6_addresses: IPv6 addresses
+
+    x_rx_bytes: Received
+    x_tx_bytes: Transmitted
+
+
+#  WifiAlerts:
+#    thermal_throttle: thermal_throttle
+#    install_pending: install_pending
+#    freshly_fused: freshly_fused
+#    lan_eth_slow_link_10: lan_eth_slow_link_10
+#    lan_eth_slow_link_100: lan_eth_slow_link_100
+#    wan_eth_poor_connection: wan_eth_poor_connection
+#    mesh_topology_changing_often: mesh_topology_changing_often
+#    mesh_unreliable_backhaul: mesh_unreliable_backhaul
+
+  WifiGetStatus:
+    captive_portal_enabled: Captive portal enabled
+  #  .SpaceX.API.Device.DeviceInfo device_info = 3;
+    uptime_s: Uptime
+    ipv4_wan_address: WAN IPv4
+    ping_drop_rate: Ping drop rate
+    ping_latency_ms: Ping latency, ms
+    is_aviation: Aviation
+    dish_ping_drop_rate: Dish ping drop rate
+    dish_ping_latency_ms: Dish ping latency, ms
+    pop_ping_drop_rate: PoP ping drop rate
+    pop_ping_latency_ms: PoP ping latency
+    is_aviation_conformed: Aviation conformed
+    ipv6_wan_addresses: WAN IPv6
+    dish_ping_drop_rate_5m: Dish ping drop rate, 5m
+#    repeated .SpaceX.API.Device.DhcpServer dhcp_servers = 1019;
+#    .SpaceX.API.Device.WifiConfig config = 2000;
+#    repeated .SpaceX.API.Device.WifiClient clients = 3000;
+    has_client_index: has_client_index
+    client_index: client_index

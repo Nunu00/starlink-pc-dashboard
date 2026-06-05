@@ -1,0 +1,92 @@
+plugins {
+    id 'com.android.application'
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"
+    id "com.google.firebase.crashlytics"
+    id 'com.github.triplet.play' version '3.12.1'
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}else{
+    keystoreProperties.put("storePassword", System.getenv().getOrDefault("ANDROID_KEY_PASSWORD", ""))
+    keystoreProperties.put("keyPassword", System.getenv().getOrDefault("ANDROID_KEY_PASSWORD", ""))
+}
+
+android {
+    compileSdkVersion 36 //flutter.compileSdkVersion
+    buildToolsVersion "36.0.0"
+    // ndkVersion flutter.ndkVersion
+//    ndkVersion = "27.0.12077973" // flutter default is outdated
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        applicationId "com.stardebug"
+        minSdkVersion flutter.minSdkVersion //flutter.minSdkVersion
+        targetSdkVersion 36 //flutter.targetSdkVersion
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        ndk {
+            abiFilters "x86_64", "armeabi-v7a", "arm64-v8a"
+        }
+    }
+
+    signingConfigs {
+        release {
+            storeFile file('../release-key.jks')
+            keyAlias "key"
+            storePassword keystoreProperties['storePassword']
+            keyPassword keystoreProperties['keyPassword']
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+    }
+    namespace 'com.stardebug'
+}
+
+play {
+    serviceAccountCredentials.set(file("../stardebug-4be77abc4bec.json"))
+    track = "internal"
+    artifactDir = file("../../build/app/outputs/bundle/release/app-release.aab")
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    implementation("com.squareup.okhttp3:okhttp:5.3.2")
+    implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:5.3.2")
+
+    // https://gist.github.com/danielcshn/7aa57155d766d46c043fde015f054d40
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.1.10"))
+}

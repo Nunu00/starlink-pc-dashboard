@@ -1,0 +1,79 @@
+import 'dart:math' as math;
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+
+class Loading extends StatefulWidget {
+  final Future<void> Function(BuildContext)? onInit;
+  final Widget Function(BuildContext)? onLoaded;
+  const Loading({super.key, this.onInit, this.onLoaded});
+
+  @override
+  State createState() => _LoadingState();
+}
+
+class _LoadingState extends State<Loading> {
+
+  bool isLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    ()async{
+      await widget.onInit!(context);
+      setState(() {
+        isLoaded = true;
+      });
+    }();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return isLoaded
+        ? widget.onLoaded!(context)
+        : MaterialApp(
+            home: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                return Stack(
+                  children: [
+                    Container(color: Color(0xff111830),
+                      height: constraints.maxHeight,
+                      padding: EdgeInsets.fromLTRB(0,0,0, constraints.maxHeight/6),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset("assets/images/logo_transparent.png", width: min(constraints.maxWidth*3/5, constraints.maxHeight/3),),
+                            SizedBox(height: 40,),
+                            Image(
+                              image: AssetImage('assets/images/starlinkforukraine.png'),
+                              width: min(constraints.maxWidth*3/5, constraints.maxHeight/3),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    Positioned(
+                      bottom: 30,
+                      left:20,
+//                      left: (constraints.maxWidth-10)/2,
+                      child: SizedBox(
+                        width: math.max(constraints.maxWidth-40,1),
+                        height: 8,
+                        child: LinearProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          minHeight: 10,
+                          backgroundColor: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            )
+        );
+  }
+
+
+}
