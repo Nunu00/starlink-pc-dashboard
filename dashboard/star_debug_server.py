@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
+import argparse
+import json
 import os
 import sys
-import json
-import time
-import argparse
-import webbrowser
 import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
+import time
+import webbrowser
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # Add current directory to path for proto imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -67,13 +67,13 @@ class StarlinkBridge:
         """Helper to send a gRPC Request message to a Starlink device"""
         if self.use_mock:
             return None
-        
+
         channel = grpc.insecure_channel(f"{host}:{port}")
         stub = starlink_pb2_grpc.DeviceStub(channel)
         try:
             response = stub.Handle(request, timeout=timeout)
             return MessageToDict(response, preserving_proto_field_name=True)
-        except Exception as e:
+        except Exception:
             # Silence errors, return None so handler knows it's unreachable
             return None
         finally:
@@ -84,7 +84,7 @@ class StarlinkBridge:
         resp = self.query_device(DISH_IP, DISH_PORT, req)
         if resp:
             return {"reachable": True, "data": resp}
-        
+
         if self.use_mock:
             return self.get_mock_dish_status()
         return {"reachable": False, "data": None}
@@ -94,7 +94,7 @@ class StarlinkBridge:
         resp = self.query_device(DISH_IP, DISH_PORT, req)
         if resp:
             return {"reachable": True, "data": resp}
-        
+
         if self.use_mock:
             return {"reachable": True, "data": {"dish_get_history": {"pop_ping_drop_rate": [0]*100, "pop_ping_latency_ms": [35]*100}}}
         return {"reachable": False, "data": None}
@@ -106,7 +106,7 @@ class StarlinkBridge:
             # Extract dish_get_obstruction_map from response dict
             val = resp.get("dish_get_obstruction_map", {})
             return {"reachable": True, "data": val}
-        
+
         if self.use_mock:
             return {"reachable": True, "data": mock_data["obstruction_map"]}
         return {"reachable": False, "data": None}
@@ -116,7 +116,7 @@ class StarlinkBridge:
         resp = self.query_device(ROUTER_IP, ROUTER_PORT, req)
         if resp:
             return {"reachable": True, "data": resp}
-        
+
         if self.use_mock:
             return self.get_mock_router_status()
         return {"reachable": False, "data": None}
@@ -161,7 +161,7 @@ class StarlinkBridge:
         # Update mock metrics
         mock_data["throughput_down"] = max(10.0, mock_data["throughput_down"] + random.uniform(-10.0, 10.0))
         mock_data["throughput_up"] = max(1.0, mock_data["throughput_up"] + random.uniform(-2.0, 2.0))
-        
+
         status = {
             "dish_get_status": {
                 "device_info": {
@@ -294,15 +294,26 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             # Try to serve as static file from dashboard directory
             file_name = path.lstrip("/")
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            file_path = os.path.join(base_dir, file_name)
+            file_path = os.path.realpath(os.path.join(base_dir, file_name))
+            base_real = os.path.realpath(base_dir)
+
+            if not os.path.normcase(file_path).startswith(os.path.normcase(base_real) + os.sep):
+                self.send_error(403, "Forbidden")
+                return
 
             if os.path.exists(file_path) and os.path.isfile(file_path):
-                mime = "text/plain"
-                if file_name.endswith(".js"): mime = "application/javascript"
-                elif file_name.endswith(".css"): mime = "text/css"
-                elif file_name.endswith(".png"): mime = "image/png"
-                elif file_name.endswith(".jpg"): mime = "image/jpeg"
-                elif file_name.endswith(".json"): mime = "application/json"
+                if file_name.endswith(".js"):
+                    mime = "application/javascript"
+                elif file_name.endswith(".css"):
+                    mime = "text/css"
+                elif file_name.endswith(".png"):
+                    mime = "image/png"
+                elif file_name.endswith(".jpg"):
+                    mime = "image/jpeg"
+                elif file_name.endswith(".json"):
+                    mime = "application/json"
+                else:
+                    mime = "text/plain"
                 self.serve_file(file_name, mime)
             else:
                 self.send_error(404, "File Not Found")
@@ -324,7 +335,11 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
 
     def serve_file(self, filename, content_type):
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        path = os.path.join(base_dir, filename)
+        base_real = os.path.realpath(base_dir)
+        path = os.path.realpath(os.path.join(base_dir, filename))
+        if not os.path.normcase(path).startswith(os.path.normcase(base_real) + os.sep):
+            self.send_error(403, "Forbidden")
+            return
         try:
             with open(path, "rb") as f:
                 content = f.read()
@@ -365,19 +380,19 @@ def main():
 
     server_address = ('', args.port)
     httpd = HTTPServer(server_address, DashboardHTTPHandler)
-    
-    print(f"============================================================")
-    print(f"   STARLINK DEBUG DASHBOARD SERVER RUNNING")
+
+    print("============================================================")
+    print("   STARLINK DEBUG DASHBOARD SERVER RUNNING")
     print(f"   Frontend available at: http://localhost:{args.port}/")
     print(f"   gRPC Target Dish: {DISH_IP}:{DISH_PORT}")
     print(f"   gRPC Target Router: {ROUTER_IP}:{ROUTER_PORT}")
-    print(f"============================================================")
-    
+    print("============================================================")
+
     # Auto open browser
     if not args.no_browser:
         def open_browser():
             time.sleep(1.0)
-            print(f"[INFO] Opening dashboard in your default browser...")
+            print("[INFO] Opening dashboard in your default browser...")
             webbrowser.open(f"http://localhost:{args.port}/")
         threading.Thread(target=open_browser, daemon=True).start()
 

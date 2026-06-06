@@ -1635,7 +1635,7 @@
             
             const line = document.createElement('div');
             line.className = 'terminal-line';
-            line.innerHTML = `<span class="terminal-time">[${dateStr}]</span> <span style="${colorClass}">${message}</span>`;
+            line.innerHTML = `<span class="terminal-time">[${dateStr}]</span> <span style="${colorClass}">${esc(message)}</span>`;
             consoleBox.appendChild(line);
             consoleBox.scrollTop = consoleBox.scrollHeight;
         }
@@ -1988,6 +1988,15 @@
             }
         }
 
+        function esc(s) {
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function getClientConnectionInfo(client) {
             const ifaceVal = client.iface !== undefined ? client.iface : client.interface;
             
@@ -2029,24 +2038,24 @@
                 const name = client.given_name || client.givenName || client.name || "Unnamed Device";
                 const ip = client.ip_address || client.ipAddress || "No IP";
                 const mac = client.mac_address || client.macAddress || "No MAC";
-                const snr = client.snr || 0;
-                
+                const snr = Number(client.snr) || 0;
+
                 const conn = getClientConnectionInfo(client);
-                
+
                 let signalHtml = "";
                 if (conn.label === "Wired") {
                     signalHtml = `<div class="signal-badge badge-wired">Wired</div>`;
                 } else {
                     signalHtml = `
                         <div class="signal-badge ${conn.class}">${snr} dB</div>
-                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">${conn.label}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">${esc(conn.label)}</div>
                     `;
                 }
 
                 card.innerHTML = `
                     <div>
-                        <div class="client-title">${name}</div>
-                        <div class="client-sub">${ip} | ${mac}</div>
+                        <div class="client-title">${esc(name)}</div>
+                        <div class="client-sub">${esc(ip)} | ${esc(mac)}</div>
                     </div>
                     <div class="client-signal">
                         ${signalHtml}
@@ -2083,13 +2092,13 @@
             nodes.forEach(node => {
                 const name = node.name || "Controller / Node";
                 const ip = node.ipAddress || node.ip_address || "Internal";
-                const snr = node.snr || 0;
+                const snr = Number(node.snr) || 0;
                 const role = node.role === 3 ? "Controller" : "Repeater";
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="label">${name} (${role}) <br/><span style="font-size: 0.75rem; font-family: monospace;">${node.macAddress || node.mac_address || ""}</span></td>
-                    <td class="value">${ip} <br/><span style="color: var(--accent-cyan); font-size: 0.8rem;">Signal: ${snr} dB</span></td>
+                    <td class="label">${esc(name)} (${role}) <br/><span style="font-size: 0.75rem; font-family: monospace;">${esc(node.macAddress || node.mac_address || "")}</span></td>
+                    <td class="value">${esc(ip)} <br/><span style="color: var(--accent-cyan); font-size: 0.8rem;">Signal: ${snr} dB</span></td>
                 `;
                 table.appendChild(tr);
             });
