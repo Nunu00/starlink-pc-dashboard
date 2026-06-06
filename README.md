@@ -26,11 +26,13 @@ This repository contains:
 
 - **Advanced Telemetry & Diagnostics**: Monitors uptime, throughput, latency, POE power consumption, detailed alignment angles, signal quality, and calibration flags.
 - **Interactive 3D Holographic Dish Visualizer**: Renders a glowing wireframe vector model of the dish face. The model rotates (yaw/azimuth) and tilts (pitch/elevation) dynamically based on telemetry. **Drag the mouse over the canvas to rotate the camera viewpoint in 3D!**
-- **Obstruction Maps**: Dual visualization using polar sector obstruction wedges and live 2D signal canvas maps.
+- **Live 2D Signal Map (Obstruction Map)**: Queries and renders the 2D SNR density grid on a canvas in real-time (with silent background auto-refresh). Highlights active tracks in cyan, obstructions in red, and unmapped/unknown sky coordinates in dark slate.
 - **Ready States Guide**: Displays system status (`Cady`, `Scp`, `L1/L2`, etc.) with inline explanations underneath so engineering terms are clear.
-- **Control Center**: Reboot the Dish/Router, toggle stow/unstow, or configure GPS and RF transmission.
-- **JSON Analyzer (Offline Mode)**: Drag-and-drop or paste `DebugData.json` files to inspect telemetry offline without any running backend.
-- **Saved Snapshots**: Save, load, and delete telemetry snapshots inside your browser's local database.
+- **Control Center & Diagnostics**: 
+  - Execute live device commands (reboot Dish/Router, toggle stow/unstow, configure GPS/RF).
+  - Run a **WAN Ping diagnostic test** from the router to verify latency and packet loss (drop rate).
+  - Clear the dish's obstruction map.
+- **Saved Snapshots & JSON Analyzer**: A single unified panel to analyze `DebugData.json` files offline (drag-and-drop or paste text) and save/load/delete telemetry snapshots inside your browser's local database.
 
 ---
 
