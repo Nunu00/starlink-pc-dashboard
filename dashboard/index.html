@@ -1576,7 +1576,7 @@
             
             const line = document.createElement('div');
             line.className = 'terminal-line';
-            line.innerHTML = `<span class="terminal-time">[${dateStr}]</span> <span style="${colorClass}">${message}</span>`;
+            line.innerHTML = `<span class="terminal-time">[${dateStr}]</span> <span style="${colorClass}">${esc(message)}</span>`;
             consoleBox.appendChild(line);
             consoleBox.scrollTop = consoleBox.scrollHeight;
         }

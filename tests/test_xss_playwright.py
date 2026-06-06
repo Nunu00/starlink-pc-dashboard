@@ -47,6 +47,34 @@ def _setup(page: Page, port: int, clients: list) -> None:
     page.goto(f"http://127.0.0.1:{port}/")
 
 
+class TestLogConsoleXSS:
+    def test_action_response_message_is_escaped(self, page: Page, server_port: int):
+        # Intercept status so the page stays in live mode
+        page.route(
+            "**/api/live/status**",
+            lambda route, _req: route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=_status_json([]),
+            ),
+        )
+        # Intercept action — return XSS payload in message, the attack path
+        page.route(
+            "**/api/live/action**",
+            lambda route, _req: route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps({"success": True, "message": XSS}),
+            ),
+        )
+        page.goto(f"http://127.0.0.1:{server_port}/")
+        # triggerAction is async — page.evaluate awaits the returned promise
+        page.evaluate("triggerAction('dish', 'reboot')")
+
+        assert page.locator("img[src='x']").count() == 0
+        assert XSS in page.locator("#terminalConsole").text_content()
+
+
 class TestDisplayClientsXSS:
     def test_given_name_is_escaped(self, page: Page, server_port: int):
         _setup(page, server_port, [
