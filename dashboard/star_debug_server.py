@@ -30,7 +30,12 @@ mock_data = {
     "ping_history": [25, 30, 28, 35, 40, 32, 27],
     "throughput_down": 120.5,
     "throughput_up": 15.2,
-    "obstruction_map": None
+    "obstruction_map": None,
+    "clients": [
+        {"mac_address": "12:34:56:78:9a:bc", "ip_address": "192.168.1.50", "given_name": "PC-Vincenzo", "snr": 0.0, "iface": "ETH"},
+        {"mac_address": "fe:dc:ba:98:76:54", "ip_address": "192.168.1.102", "given_name": "Smartphone-User", "snr": 38.0, "iface": "RF_5GHZ"},
+        {"mac_address": "8c:1d:e2:34:56:78", "ip_address": "192.168.1.105", "given_name": "Smart-TV", "snr": 25.0, "iface": "RF_2GHZ"}
+    ]
 }
 
 def generate_mock_obstruction_map():
@@ -63,7 +68,7 @@ class StarlinkBridge:
         if use_mock:
             print("[INFO] Operating in Mock Mode. Live connection bypassed.")
 
-    def query_device(self, host, port, request, timeout=1.5):
+    def query_device(self, host, port, request, timeout=1.5, raise_errors=False):
         """Helper to send a gRPC Request message to a Starlink device"""
         if self.use_mock:
             return None
@@ -73,7 +78,9 @@ class StarlinkBridge:
         try:
             response = stub.Handle(request, timeout=timeout)
             return MessageToDict(response, preserving_proto_field_name=True)
-        except Exception:
+        except Exception as e:
+            if raise_errors:
+                raise e
             # Silence errors, return None so handler knows it's unreachable
             return None
         finally:
@@ -121,10 +128,12 @@ class StarlinkBridge:
             return self.get_mock_router_status()
         return {"reachable": False, "data": None}
 
-    def send_action(self, target, action_type):
+    def send_action(self, target, action_type, payload=None):
         """Executes reboot/stow/unstow actions"""
+        if payload is None:
+            payload = {}
         if self.use_mock:
-            return self.execute_mock_action(target, action_type)
+            return self.execute_mock_action(target, action_type, payload)
 
         req = None
         host, port = DISH_IP, DISH_PORT
@@ -145,14 +154,40 @@ class StarlinkBridge:
             req = starlink_pb2.Request(dish_inhibit_rf=starlink_pb2.DishInhibitRfRequest(inhibit_rf=True))
         elif action_type == "allow_rf":
             req = starlink_pb2.Request(dish_inhibit_rf=starlink_pb2.DishInhibitRfRequest(inhibit_rf=False))
+        elif action_type == "clear_obstruction_map":
+            req = starlink_pb2.Request(dish_clear_obstruction_map=starlink_pb2.DishClearObstructionMapRequest())
+
+        elif action_type == "ping_host":
+            host_val = payload.get("host", "8.8.8.8")
+            req = starlink_pb2.Request(
+                ping_host=starlink_pb2.PingHostRequest(address=host_val, size=64)
+            )
 
         if not req:
             return {"success": False, "message": "Unknown action type"}
 
-        resp = self.query_device(host, port, req)
-        if resp:
-            return {"success": True, "response": resp}
-        return {"success": False, "message": "Device unreachable"}
+        timeout = 1.5
+        if action_type == "ping_host":
+            timeout = 10.0
+
+        try:
+            resp = self.query_device(host, port, req, timeout=timeout, raise_errors=True)
+            if resp:
+                return {"success": True, "response": resp}
+            return {"success": False, "message": "Device unreachable"}
+        except grpc.RpcError as rpc_err:
+            status_code = rpc_err.code()
+            details = rpc_err.details()
+            if status_code == grpc.StatusCode.PERMISSION_DENIED:
+                return {"success": False, "message": "Permission Denied: This action requires administrator authentication on the router."}
+            elif status_code == grpc.StatusCode.UNIMPLEMENTED:
+                return {"success": False, "message": f"Unimplemented: This action is not supported by the device ({details})."}
+            elif status_code == grpc.StatusCode.DEADLINE_EXCEEDED:
+                return {"success": False, "message": "Request timed out (Deadline Exceeded)."}
+            else:
+                return {"success": False, "message": f"gRPC Error ({status_code}): {details}"}
+        except Exception as e:
+            return {"success": False, "message": f"Error communicating with device: {str(e)}"}
 
     # Mock Data Generators
     def get_mock_dish_status(self):
@@ -238,16 +273,14 @@ class StarlinkBridge:
                     "poe_power": 135.0 + random.uniform(-4.0, 4.0),
                     "vsns_vin": 56.2 + random.uniform(-0.25, 0.25)
                 },
-                "clients": [
-                    {"mac_address": "12:34:56:78:9a:bc", "ip_address": "192.168.1.50", "given_name": "PC-Vincenzo", "snr": 0.0, "iface": "ETH"},
-                    {"mac_address": "fe:dc:ba:98:76:54", "ip_address": "192.168.1.102", "given_name": "Smartphone-User", "snr": 38.0, "iface": "RF_5GHZ"},
-                    {"mac_address": "8c:1d:e2:34:56:78", "ip_address": "192.168.1.105", "given_name": "Smart-TV", "snr": 25.0, "iface": "RF_2GHZ"}
-                ]
+                "clients": mock_data["clients"]
             }
         }
         return {"reachable": True, "data": status}
 
-    def execute_mock_action(self, target, action):
+    def execute_mock_action(self, target, action, payload=None):
+        if payload is None:
+            payload = {}
         if action == "reboot":
             mock_data["uptime_start"] = time.time()
             mock_data["boot_count"] += 1
@@ -258,6 +291,28 @@ class StarlinkBridge:
         elif action == "unstow":
             mock_data["stowed"] = False
             return {"success": True, "message": "Mock unstow request sent"}
+        elif action == "clear_obstruction_map":
+            # Reset mock obstruction map to a fully clear state
+            mock_data["obstruction_map"] = {
+                "numRows": 64,
+                "numCols": 64,
+                "snr": [1.0] * (64 * 64)
+            }
+            return {"success": True, "message": "Mock obstruction map cleared successfully"}
+
+        elif action == "ping_host":
+            host = payload.get("host", "8.8.8.8")
+            return {
+                "success": True,
+                "response": {
+                    "ping_host": {
+                        "result": {
+                            "dropRate": 0.0,
+                            "latencyMs": 24.5
+                        }
+                    }
+                }
+            }
         return {"success": True, "message": f"Mock action '{action}' completed successfully"}
 
 
@@ -326,7 +381,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 data = json.loads(post_data.decode('utf-8'))
                 target = data.get("target")
                 action = data.get("action")
-                result = self.bridge.send_action(target, action)
+                result = self.bridge.send_action(target, action, data)
                 self.send_json(result)
             except Exception as e:
                 self.send_json({"success": False, "message": str(e)}, status=400)
