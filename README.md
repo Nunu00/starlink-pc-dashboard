@@ -37,23 +37,29 @@ This repository contains:
 ## 🛠️ How to Run Locally
 
 ### Prerequisites
-Make sure you have Python 3 installed. Install the gRPC dependency:
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then install dependencies:
 ```bash
-pip install grpcio
+uv sync
 ```
 
 ### Option A: Launcher (Windows)
 Double-click the **`run_dashboard.bat`** script in the root folder. It will start the server and automatically open the dashboard in your default browser at:
 `http://localhost:8000/`
 
+> Requires uv to be installed and available on PATH.
+
 ### Option B: Command Line (All Platforms)
-Run the server script:
 ```bash
-python dashboard/star_debug_server.py
+uv run dashboard/star_debug_server.py
 ```
 *Tip: If you are not connected to a Starlink network, run with the `--mock` flag to boot into simulation mode:*
 ```bash
-python dashboard/star_debug_server.py --mock
+uv run dashboard/star_debug_server.py --mock
+```
+
+### Running Tests
+```bash
+uv run pytest
 ```
 
 ---

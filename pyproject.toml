@@ -1,0 +1,32 @@
+[project]
+name = "starlink-pc-dashboard"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "grpcio>=1.60",
+    "protobuf>=4.25",
+]
+
+[project.optional-dependencies]
+build = [
+    "requests>=2.31",
+]
+debug = [
+    "click>=8.0",
+    "requests>=2.31",
+    "pyyaml>=6.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
