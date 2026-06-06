@@ -194,13 +194,21 @@ class StarlinkBridge:
                     "valid_s": elapsed
                 },
                 "stow_requested": mock_data["stowed"],
+                "has_actuators": 1,
                 "boresight_azimuth_deg": 12.4,
                 "boresight_elevation_deg": 65.1,
                 "eth_speed_mbps": 1000,
                 "downlink_throughput_bps": mock_data["throughput_down"] * 1000000,
                 "uplink_throughput_bps": mock_data["throughput_up"] * 1000000,
                 "pop_ping_latency_ms": random.uniform(25.0, 38.0),
-                "pop_ping_drop_rate": 0.0
+                "pop_ping_drop_rate": 0.0,
+                "config": {
+                    "snow_melt_mode": mock_data.get("snow_melt_mode", 0),
+                    "swupdate_three_day_deferral_enabled": mock_data.get("swupdate_three_day_deferral_enabled", False),
+                    "swupdate_reboot_hour": mock_data.get("swupdate_reboot_hour", 3),
+                    "power_save_duration_minutes": 0,
+                    "power_save_mode": False
+                }
             }
         }
         return {"reachable": True, "data": status}
@@ -262,27 +270,29 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             super().log_message(format, *args)
 
     def do_GET(self):
-        if self.path == "/" or self.path == "/index.html":
+        # Strip query parameters for routing
+        path = self.path
+        if "?" in path:
+            path = path.split("?")[0]
+
+        if path == "/" or path == "/index.html":
             self.serve_file("index.html", "text/html")
-        elif self.path == "/api/live/status":
+        elif path == "/api/live/status":
             self.send_json({
                 "dish": self.bridge.get_dish_status(),
                 "router": self.bridge.get_router_status(),
                 "history": self.bridge.get_dish_history(),
                 "mock_mode": self.bridge.use_mock
             })
-        elif self.path == "/api/live/obstruction_map":
+        elif path == "/api/live/obstruction_map":
             self.send_json(self.bridge.get_dish_obstruction_map())
-        elif self.path.startswith("/api/live/mock_toggle"):
+        elif path.startswith("/api/live/mock_toggle"):
             # Utility to toggle mock mode in real-time
             self.bridge.use_mock = not self.bridge.use_mock
             self.send_json({"mock_mode": self.bridge.use_mock})
         else:
             # Try to serve as static file from dashboard directory
-            file_name = self.path.lstrip("/")
-            if "?" in file_name:
-                file_name = file_name.split("?")[0]
-            
+            file_name = path.lstrip("/")
             base_dir = os.path.dirname(os.path.abspath(__file__))
             file_path = os.path.join(base_dir, file_name)
 
@@ -334,6 +344,9 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
             self.end_headers()
             self.wfile.write(body)
         except Exception as e:

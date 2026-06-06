@@ -744,9 +744,19 @@
             <span class="logo-title">Starlink Debug</span>
         </div>
         <div style="display: flex; align-items: center;">
-            <div class="mock-toggle-container">
+            <div class="mock-toggle-container" style="margin-right: 1rem;">
                 <span style="font-size: 0.85rem; color: var(--text-secondary);">Simulator Mode</span>
                 <button class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" id="mockToggleBtn" onclick="toggleMockBackend()">OFF</button>
+            </div>
+            <div class="mock-toggle-container" style="margin-right: 1.5rem;">
+                <span style="font-size: 0.85rem; color: var(--text-secondary); margin-right: 0.35rem;">Interval</span>
+                <select id="pollIntervalSelect" onchange="changePollInterval()" style="padding: 0.2rem; font-size: 0.8rem; background: var(--panel-bg); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; font-family: inherit; cursor: pointer; outline: none;">
+                    <option value="500">0.5s</option>
+                    <option value="1000">1s</option>
+                    <option value="2000" selected>2s</option>
+                    <option value="5000">5s</option>
+                    <option value="10000">10s</option>
+                </select>
             </div>
             <div class="system-status">
                 <div class="status-pill">
@@ -1127,7 +1137,7 @@
                             <div class="control-row">
                                 <button class="btn btn-danger" onclick="triggerAction('dish', 'reboot')">Reboot Dish</button>
                             </div>
-                            <div class="control-row">
+                            <div class="control-row" id="stowControlRow">
                                 <button class="btn" onclick="triggerAction('dish', 'stow')">Stow (Fold)</button>
                                 <button class="btn" onclick="triggerAction('dish', 'unstow')">Unstow (Unfold)</button>
                             </div>
@@ -1249,6 +1259,10 @@
                                     <td class="label">Power Save Duration</td>
                                     <td class="value" id="cfgPowerSaveDur">--</td>
                                 </tr>
+                                <tr>
+                                    <td class="label">3-Day Update Deferral</td>
+                                    <td class="value" id="cfgUpdateDeferral">--</td>
+                                </tr>
                             </table>
                         </div>
                     </div>
@@ -1365,6 +1379,21 @@
         let poeChartInstance = null;
         let chartDataPoints = []; // for live latency/throughput scrolling
 
+        let pollIntervalId = null;
+
+        function startPolling() {
+            if (pollIntervalId) clearInterval(pollIntervalId);
+            pollLiveStatus();
+            pollIntervalId = setInterval(pollLiveStatus, appState.pollInterval || 2000);
+        }
+
+        function changePollInterval() {
+            const select = document.getElementById('pollIntervalSelect');
+            appState.pollInterval = parseInt(select.value);
+            logConsole(`Telemetry update interval set to ${appState.pollInterval / 1000}s`);
+            startPolling();
+        }
+
         // Initialization
         window.addEventListener('DOMContentLoaded', () => {
             initNavigation();
@@ -1373,8 +1402,8 @@
             initDish3DRenderer();
             
             // Start polling live status
-            pollLiveStatus();
-            setInterval(pollLiveStatus, 2000);
+            appState.pollInterval = 2000;
+            startPolling();
 
             // Set console welcome
             logConsole("System dashboard loaded. Live polling active.");
@@ -1557,7 +1586,7 @@
             if (appState.mode !== "live") return;
 
             try {
-                const response = await fetch('/api/live/status');
+                const response = await fetch(`/api/live/status?_=${Date.now()}`);
                 if (!response.ok) throw new Error("Server API issue");
 
                 const status = await response.json();
@@ -1605,7 +1634,7 @@
         // Toggle local simulator mode
         async function toggleMockBackend() {
             try {
-                const response = await fetch('/api/live/mock_toggle');
+                const response = await fetch(`/api/live/mock_toggle?_=${Date.now()}`);
                 const result = await response.json();
                 logConsole(`Simulator toggled: ${result.mock_mode ? "Enabled" : "Disabled"}`);
                 
@@ -1717,6 +1746,24 @@
             // Check dish status structure
             const dishData = getDeepField(appState.dish, "dish_get_status") || getDeepField(appState.dish, "rawStatus") || appState.dish;
             const routerData = getDeepField(appState.router, "wifi_get_status") || getDeepField(appState.router, "rawStatus") || appState.router;
+
+            // Dynamically show/hide Stow/Unstow row based on dish hardware actuators
+            if (dishData) {
+                const hasActuators = dishData.has_actuators || dishData.hasActuators;
+                const stowRow = document.getElementById('stowControlRow');
+                if (stowRow) {
+                    if (hasActuators === 2 || hasActuators === "HAS_ACTUATORS_NO" || hasActuators === false) {
+                        stowRow.style.display = 'none';
+                    } else {
+                        stowRow.style.display = 'flex';
+                    }
+                }
+            } else {
+                const stowRow = document.getElementById('stowControlRow');
+                if (stowRow) {
+                    stowRow.style.display = 'flex';
+                }
+            }
 
             // 1. Overview Tab
             if (dishData) {
@@ -1948,6 +1995,8 @@
                 `;
                 container.appendChild(card);
             });
+            // Re-apply current search filter
+            filterClients();
         }
 
         function filterClients() {
@@ -2211,7 +2260,7 @@
 
             logConsole("Requesting live 2D obstruction map grid...");
             try {
-                const response = await fetch('/api/live/obstruction_map');
+                const response = await fetch(`/api/live/obstruction_map?_=${Date.now()}`);
                 const result = await response.json();
                 if (result.reachable) {
                     logConsole(`Obstruction map loaded: Grid size ${result.data.numRows}x${result.data.numCols}`);
@@ -2434,8 +2483,8 @@
                 const deltaX = e.clientX - lastMouseX;
                 const deltaY = e.clientY - lastMouseY;
 
-                cameraAngleZ -= deltaX * 0.007;
-                cameraAngleX = Math.max(0.1, Math.min(Math.PI/2 - 0.1, cameraAngleX - deltaY * 0.007));
+                cameraAngleZ += deltaX * 0.007;
+                cameraAngleX = Math.max(0.1, Math.min(Math.PI/2 - 0.1, cameraAngleX + deltaY * 0.007));
 
                 lastMouseX = e.clientX;
                 lastMouseY = e.clientY;
@@ -2706,14 +2755,19 @@
                 const snowMelt = getDeepField(config, "snow_melt_mode") || getDeepField(config, "snowMeltMode") || "N/A";
                 const swReboot = getDeepField(config, "swupdate_reboot_hour") || getDeepField(config, "swupdateRebootHour");
                 const psDur = getDeepField(config, "power_save_duration_minutes") || getDeepField(config, "powerSaveDurationMinutes");
+                const swDefer = getDeepField(config, "swupdate_three_day_deferral_enabled") || getDeepField(config, "swupdateThreeDayDeferralEnabled");
                 
                 document.getElementById('cfgSnowMelt').textContent = formatKey(snowMelt);
                 document.getElementById('cfgUpdateHour').textContent = swReboot !== null && swReboot !== undefined ? `${swReboot}:00 AM` : "N/A";
                 document.getElementById('cfgPowerSaveDur').textContent = psDur !== null && psDur !== undefined ? `${psDur} min` : "Disabled";
+                document.getElementById('cfgUpdateDeferral').textContent = swDefer !== undefined ? (swDefer ? "✅ Enabled (Updates Delayed)" : "❌ Disabled") : "N/A";
+                document.getElementById('cfgUpdateDeferral').style.color = swDefer ? "var(--status-green)" : "inherit";
             } else {
                 document.getElementById('cfgSnowMelt').textContent = "--";
                 document.getElementById('cfgUpdateHour').textContent = "--";
                 document.getElementById('cfgPowerSaveDur').textContent = "--";
+                document.getElementById('cfgUpdateDeferral').textContent = "--";
+                document.getElementById('cfgUpdateDeferral').style.color = "inherit";
             }
 
             // 4. Detailed Dish Alignment & Attitude
