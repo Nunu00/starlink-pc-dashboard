@@ -156,6 +156,8 @@ class StarlinkBridge:
             req = starlink_pb2.Request(dish_inhibit_rf=starlink_pb2.DishInhibitRfRequest(inhibit_rf=False))
         elif action_type == "clear_obstruction_map":
             req = starlink_pb2.Request(dish_clear_obstruction_map=starlink_pb2.DishClearObstructionMapRequest())
+        elif action_type == "start_speedtest":
+            req = starlink_pb2.Request(start_speedtest=starlink_pb2.StartSpeedtestRequest())
 
         elif action_type == "ping_host":
             host_val = payload.get("host", "8.8.8.8")
@@ -278,6 +280,99 @@ class StarlinkBridge:
         }
         return {"reachable": True, "data": status}
 
+    def get_wifi_config(self):
+        if self.use_mock:
+            return self.get_mock_wifi_config()
+
+        req = starlink_pb2.Request(wifi_get_config=starlink_pb2.WifiGetConfigRequest())
+        resp = self.query_device(ROUTER_IP, ROUTER_PORT, req)
+        if resp:
+            return {"reachable": True, "data": resp}
+        return {"reachable": False, "data": None}
+
+    def get_mock_wifi_config(self):
+        return {
+            "reachable": True,
+            "data": {
+                "wifi_get_config": {
+                    "wifi_config": {
+                        "channel_2ghz": 6,
+                        "channel_5ghz": 44,
+                        "networks": [
+                            {
+                                "basic_service_sets": [
+                                    {
+                                        "ssid": "Starlink_Home",
+                                        "band": "RF_2GHZ",
+                                        "auth_wpa2": {"password": "SuperSecurePassword123"}
+                                    },
+                                    {
+                                        "ssid": "Starlink_Home",
+                                        "band": "RF_5GHZ",
+                                        "auth_wpa2": {"password": "SuperSecurePassword123"}
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
+    def get_speedtest_status(self):
+        if self.use_mock:
+            return self.get_mock_speedtest_status()
+
+        req = starlink_pb2.Request(get_speedtest_status=starlink_pb2.GetSpeedtestStatusRequest())
+        resp = self.query_device(ROUTER_IP, ROUTER_PORT, req)
+        if resp:
+            return {"reachable": True, "data": resp}
+        return {"reachable": False, "data": None}
+
+    def get_mock_speedtest_status(self):
+        st = mock_data.get("speedtest")
+        if not st or not st.get("running"):
+            return {
+                "reachable": True,
+                "data": {
+                    "get_speedtest_status": {
+                        "status": {
+                            "running": False,
+                            "id": "mock-speedtest",
+                            "down": {"throughputs_mbps": []},
+                            "up": {"throughputs_mbps": []}
+                        }
+                    }
+                }
+            }
+
+        elapsed = time.time() - st["start_time"]
+        import random
+
+        # Simulate 16 seconds speedtest: download (0-8s), upload (8-16s)
+        if elapsed < 8:
+            # Running download
+            st["down"].append(random.uniform(120.0, 240.0))
+        elif elapsed < 16:
+            # Running upload
+            st["up"].append(random.uniform(15.0, 35.0))
+        else:
+            st["running"] = False
+
+        return {
+            "reachable": True,
+            "data": {
+                "get_speedtest_status": {
+                    "status": {
+                        "running": st["running"],
+                        "id": "mock-speedtest",
+                        "down": {"throughputs_mbps": st["down"]},
+                        "up": {"throughputs_mbps": st["up"]}
+                    }
+                }
+            }
+        }
+
     def execute_mock_action(self, target, action, payload=None):
         if payload is None:
             payload = {}
@@ -299,6 +394,14 @@ class StarlinkBridge:
                 "snr": [1.0] * (64 * 64)
             }
             return {"success": True, "message": "Mock obstruction map cleared successfully"}
+        elif action == "start_speedtest":
+            mock_data["speedtest"] = {
+                "running": True,
+                "start_time": time.time(),
+                "down": [],
+                "up": []
+            }
+            return {"success": True, "message": "Mock speed test started"}
 
         elif action == "ping_host":
             host = payload.get("host", "8.8.8.8")
@@ -339,6 +442,10 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 "history": self.bridge.get_dish_history(),
                 "mock_mode": self.bridge.use_mock
             })
+        elif path == "/api/live/wifi_config":
+            self.send_json(self.bridge.get_wifi_config())
+        elif path == "/api/live/speedtest_status":
+            self.send_json(self.bridge.get_speedtest_status())
         elif path == "/api/live/obstruction_map":
             self.send_json(self.bridge.get_dish_obstruction_map())
         elif path.startswith("/api/live/mock_toggle"):

@@ -651,6 +651,7 @@
             background: rgba(6, 182, 212, 0.1);
             color: var(--accent-cyan);
             font-weight: 600;
+            white-space: nowrap;
         }
 
         /* Connection badges */
@@ -927,16 +928,55 @@
                             <span class="kpi-value" id="valThroughputUp">--</span>
                         </div>
                     </div>
+                    <!-- Connected Clients KPI Card -->
+                    <div class="glass-panel kpi-card">
+                        <div class="kpi-icon-container">
+                            <svg viewBox="0 0 24 24"><path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8A2.5,2.5 0 0,1 7.5,10.5A2.5,2.5 0 0,1 5,13A2.5,2.5 0 0,1 2.5,10.5A2.5,2.5 0 0,1 5,8M19,8A2.5,2.5 0 0,1 21.5,10.5A2.5,2.5 0 0,1 19,13A2.5,2.5 0 0,1 16.5,10.5A2.5,2.5 0 0,1 19,8M12,14C14.7,14 20,15.3 20,18V20H4V18C4,15.3 9.3,14 12,14M5,15.5C7.2,15.5 10.9,16.3 11,18V18.5H5.5V18C5.5,17.2 5.15,16.3 5,15.5M19,15.5C18.85,16.3 18.5,17.2 18.5,18V18.5H13V18C13.1,16.3 16.8,15.5 19,15.5Z"/></svg>
+                        </div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Connected Clients</span>
+                            <span class="kpi-value" id="valClientsCount">--</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="main-grid">
-                    <div class="glass-panel card">
-                        <div class="card-title">
-                            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                            Real-time Throughput (Live Mode)
+                    <div style="display: flex; flex-direction: column; gap: 2rem;">
+                        <div class="glass-panel card">
+                            <div class="card-title">
+                                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                                Real-time Throughput (Live Mode)
+                            </div>
+                            <div style="height: 300px; position: relative;">
+                                <canvas id="liveChart"></canvas>
+                            </div>
                         </div>
-                        <div style="height: 300px; position: relative;">
-                            <canvas id="liveChart"></canvas>
+
+                        <!-- Antenna Speed Test -->
+                        <div class="glass-panel card">
+                            <div class="card-title">
+                                <svg viewBox="0 0 24 24" style="width: 1.2rem; height: 1.2rem; fill: var(--primary); vertical-align: middle; margin-right: 0.5rem;"><path d="M12,21L15.6,17.4C14.6,16.5 13.3,16 12,16C10.7,16 9.4,16.5 8.4,17.4L12,21M12,2a10,10 0 0,0-10,10c0,5.5 4.5,10 10,10a10,10 0 0,0 10-10C22,6.5 17.5,2 12,2m0,2a8,8 0 0,1 8,8c0,2.2-0.9,4.2-2.4,5.7l-1.4-1.4c1.1-1.1 1.8-2.6 1.8-4.3a6,6 0 0,0-6-6 6,6 0 0,0-6,6c0,1.7 0.7,3.2 1.8,4.3L6.4,17.7C4.9,16.2 4,14.2 4,12a8,8 0 0,1 8-8m-2,9.5V20h4v-6.5h5L12,6L4.5,13.5h5z"/></svg>
+                                Antenna Speed Test
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                                <div>
+                                    <button class="btn btn-primary" id="btnStartSpeedtest" onclick="startAntennaSpeedtest()">Start Speed Test</button>
+                                    <span id="speedtestStatusText" style="margin-left: 1rem; color: var(--text-secondary); font-size: 0.9rem;">Ready</span>
+                                </div>
+                                <div id="speedtestResults" style="display: flex; gap: 2rem; align-items: center;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Download</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;" id="speedtestDown">--</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Upload</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;" id="speedtestUp">--</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="speedtestProgressContainer" style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; display: none;">
+                                <div id="speedtestProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #3b82f6); transition: width 0.3s ease;"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -1145,6 +1185,32 @@
                             <table class="info-table" id="meshNodesTable">
                                 <tr>
                                     <td colspan="2" style="text-align: center; color: var(--text-secondary);">No mesh nodes data</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- WiFi Configuration Card -->
+                        <div class="glass-panel card">
+                            <div class="card-title">
+                                <svg viewBox="0 0 24 24" style="width: 1.2rem; height: 1.2rem; fill: var(--primary); vertical-align: middle; margin-right: 0.5rem;"><path d="M12,21L15.6,17.4C14.6,16.5 13.3,16 12,16C10.7,16 9.4,16.5 8.4,17.4L12,21M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,14.2 19.1,16.2 17.6,17.7L16.2,16.3C17.3,15.2 18,13.7 18,12A6,6 0 0,0 12,6A6,6 0 0,0 6,12C6,13.7 6.7,15.2 7.8,16.3L6.4,17.7C4.9,16.2 4,14.2 4,12A8,8 0 0,1 12,4Z"/></svg>
+                                WiFi Configuration
+                            </div>
+                            <table class="info-table" id="wifiConfigTable">
+                                <tr>
+                                    <td class="label">SSID (2.4 GHz)</td>
+                                    <td class="value" id="wifiSsid2ghz">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">SSID (5 GHz)</td>
+                                    <td class="value" id="wifiSsid5ghz">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Channel (2.4 GHz)</td>
+                                    <td class="value" id="wifiChannel2ghz">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Channel (5 GHz)</td>
+                                    <td class="value" id="wifiChannel5ghz">--</td>
                                 </tr>
                             </table>
                         </div>
@@ -1500,6 +1566,11 @@
                                 draw2DObstructionMap(appState.gridData);
                             }, 50);
                         }
+                    }
+
+                    // If tab is router, load WiFi configuration
+                    if (tabId === 'routerTab') {
+                        loadWifiConfig();
                     }
                 });
             });
@@ -1868,6 +1939,14 @@
                 document.getElementById('valThroughputUp').textContent = "--";
             }
 
+            // Connected clients count
+            if (routerData) {
+                const allClients = getDeepField(routerData, "clients") || getDeepField(routerData, "clients_list") || getDeepField(routerData, "clientsList") || [];
+                document.getElementById('valClientsCount').textContent = allClients.length;
+            } else {
+                document.getElementById('valClientsCount').textContent = "--";
+            }
+
             // 2. Dish Details Tab
             if (dishData) {
                 document.getElementById('dishId').textContent = dishData.device_info?.id || dishData.deviceInfo?.id || "N/A";
@@ -2040,9 +2119,15 @@
                 if (conn.label === "Wired") {
                     signalHtml = `<div class="signal-badge badge-wired">Wired</div>`;
                 } else {
+                    const signalStrength = client.signal_strength !== undefined ? Number(client.signal_strength) : (client.signalStrength !== undefined ? Number(client.signalStrength) : null);
+                    let powerHtml = "";
+                    if (signalStrength !== null) {
+                        powerHtml = `<div style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.85; margin-top: 0.1rem; white-space: nowrap;">Sig: ${signalStrength} dBm</div>`;
+                    }
                     signalHtml = `
-                        <div class="signal-badge ${conn.class}">${snr} dB</div>
-                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">${esc(conn.label)}</div>
+                        <div class="signal-badge ${conn.class}">${esc(conn.label)}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem; white-space: nowrap;">SNR: ${snr} dB</div>
+                        ${powerHtml}
                     `;
                 }
 
@@ -2767,6 +2852,161 @@
                 }
             }
             return null;
+        }
+
+        async function loadWifiConfig() {
+            if (appState.mode !== "live") return;
+            try {
+                const response = await fetch(`/api/live/wifi_config?_=${Date.now()}`);
+                if (!response.ok) throw new Error("Wifi config API issue");
+                const configData = await response.json();
+                if (configData && configData.reachable) {
+                    updateWifiConfigUI(configData.data);
+                }
+            } catch (err) {
+                console.error("Error loading WiFi config:", err);
+            }
+        }
+
+        function updateWifiConfigUI(data) {
+            const wifiGetConfig = getDeepField(data, "wifi_get_config") || data;
+            const wifiConfig = getDeepField(wifiGetConfig, "wifi_config") || {};
+            
+            // Channels - Show "Auto" if not set statically
+            const ch2 = wifiConfig.channel_2ghz || wifiConfig.channel2ghz || "Auto";
+            const ch5 = wifiConfig.channel_5ghz || wifiConfig.channel5ghz || "Auto";
+            document.getElementById('wifiChannel2ghz').textContent = ch2;
+            document.getElementById('wifiChannel5ghz').textContent = ch5;
+
+            // Find SSID in basic_service_sets
+            let ssid2G = "--";
+            let ssid5G = "--";
+
+            const networks = wifiConfig.networks || [];
+            networks.forEach(net => {
+                const bssList = net.basic_service_sets || net.basicServiceSets || [];
+                bssList.forEach(bss => {
+                    let band = bss.band || "";
+                    if (typeof band === "number") {
+                        if (band === 1) band = "RF_2GHZ";
+                        else if (band === 2) band = "RF_5GHZ";
+                        else if (band === 3) band = "RF_5GHZ_HIGH";
+                    }
+                    band = String(band);
+
+                    if (band.includes("2GHZ")) {
+                        ssid2G = bss.ssid || ssid2G;
+                    } else if (band.includes("5GHZ")) {
+                        ssid5G = bss.ssid || ssid5G;
+                    }
+                });
+            });
+
+            document.getElementById('wifiSsid2ghz').textContent = ssid2G;
+            document.getElementById('wifiSsid5ghz').textContent = ssid5G;
+        }
+
+        // Antenna Speed Test logic
+        let speedtestIntervalId = null;
+
+        async function startAntennaSpeedtest() {
+            if (appState.mode !== "live") {
+                alert("Speed test is only available in live connection mode.");
+                return;
+            }
+
+            const btn = document.getElementById('btnStartSpeedtest');
+            const statusText = document.getElementById('speedtestStatusText');
+            const progressContainer = document.getElementById('speedtestProgressContainer');
+            const progressBar = document.getElementById('speedtestProgressBar');
+            const speedDown = document.getElementById('speedtestDown');
+            const speedUp = document.getElementById('speedtestUp');
+
+            btn.disabled = true;
+            statusText.textContent = "Starting...";
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '5%';
+            speedDown.textContent = "--";
+            speedUp.textContent = "--";
+
+            const res = await triggerAction('router', 'start_speedtest');
+            if (res && res.success) {
+                statusText.textContent = "Running...";
+                progressBar.style.width = '10%';
+
+                // Start polling status
+                if (speedtestIntervalId) clearInterval(speedtestIntervalId);
+                speedtestIntervalId = setInterval(pollSpeedtestStatus, 1000);
+            } else {
+                btn.disabled = false;
+                statusText.textContent = "Failed to start: " + (res.message || "Unknown error");
+                progressContainer.style.display = 'none';
+            }
+        }
+
+        async function pollSpeedtestStatus() {
+            try {
+                const response = await fetch(`/api/live/speedtest_status?_=${Date.now()}`);
+                if (!response.ok) throw new Error("Speedtest status API issue");
+                
+                const res = await response.json();
+                if (res && res.reachable && res.data) {
+                    const getStatus = getDeepField(res.data, "get_speedtest_status") || res.data;
+                    const status = getDeepField(getStatus, "status") || {};
+
+                    const running = status.running;
+                    const downObj = status.down || {};
+                    const upObj = status.up || {};
+
+                    const downSpeeds = downObj.throughputs_mbps || downObj.throughputsMbps || [];
+                    const upSpeeds = upObj.throughputs_mbps || upObj.throughputsMbps || [];
+
+                    if (downSpeeds.length > 0) {
+                        const latestDown = downSpeeds[downSpeeds.length - 1];
+                        document.getElementById('speedtestDown').textContent = `${latestDown.toFixed(1)} Mbps`;
+                    }
+                    if (upSpeeds.length > 0) {
+                        const latestUp = upSpeeds[upSpeeds.length - 1];
+                        document.getElementById('speedtestUp').textContent = `${latestUp.toFixed(1)} Mbps`;
+                    }
+
+                    const progressBar = document.getElementById('speedtestProgressBar');
+                    const statusText = document.getElementById('speedtestStatusText');
+
+                    if (running) {
+                        if (upSpeeds.length > 0) {
+                            statusText.textContent = "Testing Upload...";
+                            const progress = 50 + Math.min(45, upSpeeds.length * 5);
+                            progressBar.style.width = `${progress}%`;
+                        } else if (downSpeeds.length > 0) {
+                            statusText.textContent = "Testing Download...";
+                            const progress = 10 + Math.min(40, downSpeeds.length * 5);
+                            progressBar.style.width = `${progress}%`;
+                        } else {
+                            statusText.textContent = "Initializing...";
+                            progressBar.style.width = `10%`;
+                        }
+                    } else {
+                        clearInterval(speedtestIntervalId);
+                        speedtestIntervalId = null;
+                        
+                        statusText.textContent = "Completed";
+                        progressBar.style.width = '100%';
+                        document.getElementById('btnStartSpeedtest').disabled = false;
+                        
+                        setTimeout(() => {
+                            document.getElementById('speedtestProgressContainer').style.display = 'none';
+                        }, 3000);
+                    }
+                }
+            } catch (err) {
+                console.error("Error polling speedtest status:", err);
+                clearInterval(speedtestIntervalId);
+                speedtestIntervalId = null;
+                document.getElementById('btnStartSpeedtest').disabled = false;
+                document.getElementById('speedtestStatusText').textContent = "Error: Status check failed";
+                document.getElementById('speedtestProgressContainer').style.display = 'none';
+            }
         }
 
     </script>
