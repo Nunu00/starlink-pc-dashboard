@@ -1845,8 +1845,8 @@
             liveChartInstance.data.datasets[0].data.push(downMbps);
             liveChartInstance.data.datasets[1].data.push(upMbps);
 
-            // Limit chart size to 15 points
-            if (liveChartInstance.data.labels.length > 15) {
+            // Limit chart size to 40 points
+            if (liveChartInstance.data.labels.length > 40) {
                 liveChartInstance.data.labels.shift();
                 liveChartInstance.data.datasets[0].data.shift();
                 liveChartInstance.data.datasets[1].data.shift();
@@ -1868,7 +1868,7 @@
                         poeChartInstance.data.datasets[0].data.push(power.toFixed(2));
                         poeChartInstance.data.datasets[1].data.push(vin.toFixed(2));
 
-                        if (poeChartInstance.data.labels.length > 15) {
+                        if (poeChartInstance.data.labels.length > 40) {
                             poeChartInstance.data.labels.shift();
                             poeChartInstance.data.datasets[0].data.shift();
                             poeChartInstance.data.datasets[1].data.shift();
