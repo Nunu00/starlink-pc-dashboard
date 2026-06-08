@@ -35,7 +35,9 @@ mock_data = {
         {"mac_address": "12:34:56:78:9a:bc", "ip_address": "192.168.1.50", "given_name": "PC-Vincenzo", "snr": 0.0, "iface": "ETH"},
         {"mac_address": "fe:dc:ba:98:76:54", "ip_address": "192.168.1.102", "given_name": "Smartphone-User", "snr": 38.0, "iface": "RF_5GHZ"},
         {"mac_address": "8c:1d:e2:34:56:78", "ip_address": "192.168.1.105", "given_name": "Smart-TV", "snr": 25.0, "iface": "RF_2GHZ"}
-    ]
+    ],
+    "historical_outages": [],
+    "active_outage": None
 }
 
 def generate_mock_obstruction_map():
@@ -103,8 +105,100 @@ class StarlinkBridge:
             return {"reachable": True, "data": resp}
 
         if self.use_mock:
-            return {"reachable": True, "data": {"dish_get_history": {"pop_ping_drop_rate": [0]*100, "pop_ping_latency_ms": [35]*100}}}
+            # Dynamically compute timestamps relative to now so they always appear fresh
+            now = time.time()
+            mock_outages = [
+                {
+                    "cause": "OBSTRUCTED",
+                    "start_timestamp_ns": str(int((now - 3600) * 1000000000)),
+                    "duration_ns": str(15 * 1000000000),
+                    "did_switch": False
+                },
+                {
+                    "cause": "NO_SATS",
+                    "start_timestamp_ns": str(int((now - 1800) * 1000000000)),
+                    "duration_ns": str(8 * 1000000000),
+                    "did_switch": False
+                }
+            ]
+            # Add any dynamically generated historical outages
+            mock_outages.extend(mock_data.get("historical_outages", []))
+
+            active = mock_data.get("active_outage")
+            if active:
+                mock_outages.append({
+                    "cause": active["cause"],
+                    "start_timestamp_ns": str(int(active["start_time"] * 1000000000)),
+                    "duration_ns": str(int((now - active["start_time"]) * 1000000000)),
+                    "did_switch": active.get("did_switch", False)
+                })
+
+            return {
+                "reachable": True,
+                "data": {
+                    "dish_get_history": {
+                        "pop_ping_drop_rate": [0]*100,
+                        "pop_ping_latency_ms": [35]*100,
+                        "outages": mock_outages,
+                        "event_log": {
+                            "current_timestamp_ns": str(int(now * 1000000000)),
+                            "events": [
+                                {
+                                    "severity": "EVENT_SEVERITY_WARNING",
+                                    "reason": "EVENT_REASON_UT_ALERT_ETH_SLOW_LINK",
+                                    "start_timestamp_ns": str(int((now - 7200) * 1000000000)),
+                                    "duration_ns": str(0)
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         return {"reachable": False, "data": None}
+
+    def get_router_history(self):
+        req = starlink_pb2.Request(get_history=starlink_pb2.GetHistoryRequest())
+        resp = self.query_device(ROUTER_IP, ROUTER_PORT, req)
+        if resp:
+            return {"reachable": True, "data": resp}
+
+        if self.use_mock:
+            return self.get_mock_router_history()
+        return {"reachable": False, "data": None}
+
+    def get_mock_router_history(self):
+        now = time.time()
+        events = [
+            {
+                "severity": "EVENT_SEVERITY_WARNING",
+                "reason": "EVENT_REASON_CLIENT_RECONNECTING_OFTEN",
+                "start_timestamp_ns": str(int((now - 4000) * 1000000000)),
+                "duration_ns": str(120 * 1000000000)
+            },
+            {
+                "severity": "EVENT_SEVERITY_ADVISORY",
+                "reason": "EVENT_REASON_CLIENT_SWITCHING_BAND",
+                "start_timestamp_ns": str(int((now - 2000) * 1000000000)),
+                "duration_ns": str(5 * 1000000000)
+            },
+            {
+                "severity": "EVENT_SEVERITY_WARNING",
+                "reason": "EVENT_REASON_ROUTER_HIGH_OVERLAPPING_BSS",
+                "start_timestamp_ns": str(int((now - 800) * 1000000000)),
+                "duration_ns": str(30 * 1000000000)
+            }
+        ]
+        return {
+            "reachable": True,
+            "data": {
+                "wifi_get_history": {
+                    "event_log": {
+                        "current_timestamp_ns": str(int(now * 1000000000)),
+                        "events": events
+                    }
+                }
+            }
+        }
 
     def get_dish_obstruction_map(self):
         req = starlink_pb2.Request(dish_get_obstruction_map=starlink_pb2.DishGetObstructionMapRequest())
@@ -199,6 +293,35 @@ class StarlinkBridge:
         mock_data["throughput_down"] = max(10.0, mock_data["throughput_down"] + random.uniform(-10.0, 10.0))
         mock_data["throughput_up"] = max(1.0, mock_data["throughput_up"] + random.uniform(-2.0, 2.0))
 
+        # Outage life-cycle simulation
+        now = time.time()
+        active = mock_data.get("active_outage")
+        if active:
+            # Check if active outage target duration is reached
+            if now - active["start_time"] > active["target_duration"]:
+                # End active outage and save to historical
+                hist = {
+                    "cause": active["cause"],
+                    "start_timestamp_ns": str(int(active["start_time"] * 1000000000)),
+                    "duration_ns": str(int(active["target_duration"] * 1000000000)),
+                    "did_switch": active.get("did_switch", False)
+                }
+                mock_data["historical_outages"].append(hist)
+                mock_data["active_outage"] = None
+                active = None
+        else:
+            # Randomly trigger a new active outage (10% probability)
+            if random.random() < 0.10:
+                cause = random.choice(["OBSTRUCTED", "NO_SATS", "NO_PINGS", "SKY_SEARCH"])
+                duration = random.uniform(5.0, 20.0) # 5 to 20 seconds
+                mock_data["active_outage"] = {
+                    "cause": cause,
+                    "start_time": now,
+                    "target_duration": duration,
+                    "did_switch": random.choice([True, False])
+                }
+                active = mock_data["active_outage"]
+
         status = {
             "dish_get_status": {
                 "device_info": {
@@ -219,14 +342,14 @@ class StarlinkBridge:
                     "unexpected_location": False,
                     "slow_ethernet_speeds": False,
                     "roaming": False,
-                    "is_heating": False,
+                    "is_heating": active is not None and active["cause"] == "THERMAL_SHUTDOWN",
                 },
                 "gps_stats": {
                     "gps_valid": True,
                     "gps_sats": mock_data["gps_sats"]
                 },
                 "obstruction_stats": {
-                    "currently_obstructed": False,
+                    "currently_obstructed": active is not None and active["cause"] == "OBSTRUCTED",
                     "fraction_obstructed": 0.045,
                     "valid_s": elapsed
                 },
@@ -235,10 +358,10 @@ class StarlinkBridge:
                 "boresight_azimuth_deg": 12.4,
                 "boresight_elevation_deg": 65.1,
                 "eth_speed_mbps": 1000,
-                "downlink_throughput_bps": mock_data["throughput_down"] * 1000000,
-                "uplink_throughput_bps": mock_data["throughput_up"] * 1000000,
-                "pop_ping_latency_ms": random.uniform(25.0, 38.0),
-                "pop_ping_drop_rate": 0.0,
+                "downlink_throughput_bps": 0.0 if active else mock_data["throughput_down"] * 1000000,
+                "uplink_throughput_bps": 0.0 if active else mock_data["throughput_up"] * 1000000,
+                "pop_ping_latency_ms": 0.0 if active else random.uniform(25.0, 38.0),
+                "pop_ping_drop_rate": 1.0 if active else 0.0,
                 "config": {
                     "snow_melt_mode": mock_data.get("snow_melt_mode", 0),
                     "swupdate_three_day_deferral_enabled": mock_data.get("swupdate_three_day_deferral_enabled", False),
@@ -248,6 +371,16 @@ class StarlinkBridge:
                 }
             }
         }
+
+        # If there's an active outage, populate the "outage" field in status
+        if active:
+            status["dish_get_status"]["outage"] = {
+                "cause": active["cause"],
+                "start_timestamp_ns": str(int(active["start_time"] * 1000000000)),
+                "duration_ns": str(int((now - active["start_time"]) * 1000000000)),
+                "did_switch": active.get("did_switch", False)
+            }
+
         return {"reachable": True, "data": status}
 
     def get_mock_router_status(self):
@@ -440,6 +573,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 "dish": self.bridge.get_dish_status(),
                 "router": self.bridge.get_router_status(),
                 "history": self.bridge.get_dish_history(),
+                "router_history": self.bridge.get_router_history(),
                 "mock_mode": self.bridge.use_mock
             })
         elif path == "/api/live/wifi_config":

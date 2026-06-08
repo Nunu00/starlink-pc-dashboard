@@ -732,6 +732,100 @@
             gap: 0.5rem;
             margin-right: 1.5rem;
         }
+
+        /* Outage Log Card Styles */
+        .outages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 0.25rem;
+        }
+
+        .outage-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            border: 1px solid transparent;
+            line-height: 1.4;
+            transition: all 0.2s ease;
+        }
+
+        .outage-item svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .outage-item-error {
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+        }
+        .outage-item-error svg {
+            fill: var(--status-red);
+        }
+
+        .outage-item-warning {
+            background: rgba(245, 158, 11, 0.08);
+            border-color: rgba(245, 158, 11, 0.15);
+            color: #fde68a;
+        }
+        .outage-item-warning svg {
+            fill: var(--status-amber);
+        }
+
+        .outage-item-info {
+            background: rgba(6, 182, 212, 0.08);
+            border-color: rgba(6, 182, 212, 0.15);
+            color: #a5f3fc;
+        }
+        .outage-item-info svg {
+            fill: var(--accent-cyan);
+        }
+
+        .outage-cause {
+            font-weight: 600;
+        }
+
+        .outage-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 0.1rem;
+        }
+
+        .outage-duration {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .badge-active-outage {
+            background: var(--status-red);
+            color: white;
+            padding: 0.15rem 0.35rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        @keyframes activePulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); border-color: rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.15); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.15); }
+        }
+
+        .outage-item-active-pulse {
+            animation: activePulse 2s infinite;
+            background: rgba(239, 68, 68, 0.12);
+        }
     </style>
 </head>
 <body>
@@ -1019,6 +1113,19 @@
                             </table>
                             <div style="margin-top: 1rem; text-align: center;">
                                 <button class="btn btn-secondary" onclick="saveCurrentToSnapshot()">Save Snapshot</button>
+                            </div>
+                        </div>
+
+                        <!-- Starlink Event & Outage Log -->
+                        <div class="glass-panel card" style="display: flex; flex-direction: column;">
+                            <div class="card-title">
+                                <svg viewBox="0 0 24 24"><path d="M12.5,2C17.79,2 22,6.21 22,11.5C22,16.79 17.79,21 12.5,21C9.27,21 6.44,19.39 4.75,16.92L6.4,15.27C7.68,17.22 9.94,18.5 12.5,18.5C16.37,18.5 19.5,15.37 19.5,11.5C19.5,7.63 16.37,4.5 12.5,4.5C8.73,4.5 5.66,7.46 5.51,11.2H8.5L4.5,15.2L0.5,11.2H3.5C3.65,6.34 7.62,2.4 12.5,2M12,7H13.5V11.5L17,14L16.25,15.2L12,12V7Z"/></svg>
+                                Starlink Event & Outage Log
+                            </div>
+                            <div id="outagesContainer" class="outages-container">
+                                <div style="color: var(--text-secondary); text-align: center; padding: 2rem; font-size: 0.95rem;">
+                                    Loading events...
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1707,6 +1814,7 @@
                 appState.dish = status.dish.reachable ? status.dish.data : null;
                 appState.router = (status.router && status.router.reachable) ? status.router.data : null;
                 appState.history = (status.history && status.history.reachable) ? status.history.data : null;
+                appState.routerHistory = (status.router_history && status.router_history.reachable) ? status.router_history.data : null;
 
                 // Check mock state from headers or response payload (toggled by button)
                 if (status.mock_mode) {
@@ -2018,6 +2126,19 @@
 
             // 4. Mesh Nodes
             displayMeshNodes(appState.meshNodes);
+
+            // Render Starlink Event & Outage Log
+            const historyData = getDeepField(appState.history, "dish_get_history") || appState.history;
+            const outagesList = getDeepField(historyData, "outages") || [];
+            
+            // Extract native events
+            const dishEvents = getDeepField(historyData, "event_log")?.events || getDeepField(historyData, "eventLog")?.events || [];
+            
+            const routerHistoryData = getDeepField(appState.routerHistory, "wifi_get_history") || appState.routerHistory;
+            const routerEvents = getDeepField(routerHistoryData, "event_log")?.events || getDeepField(routerHistoryData, "eventLog")?.events || [];
+            
+            const activeOutage = getDeepField(dishData, "outage") || null;
+            displayEventsAndOutages(outagesList, activeOutage, dishEvents, routerEvents);
 
             renderAdvancedTelemetry();
         }
@@ -2355,6 +2476,7 @@
             appState.dish = jsonData.dish || null;
             appState.router = jsonData.router || null;
             appState.history = jsonData.history || null;
+            appState.routerHistory = jsonData.routerHistory || jsonData.router_history || null;
             appState.meshNodes = jsonData.meshNodes || jsonData.meshNodesList || [];
             appState.gridData = jsonData.dish?.obstructionStats?.obstructionMap || jsonData.dish?.rawStatus?.obstructionStats?.obstructionMap || null;
 
@@ -2379,7 +2501,8 @@
                 data: {
                     dish: appState.dish,
                     router: appState.router,
-                    history: appState.history
+                    history: appState.history,
+                    routerHistory: appState.routerHistory
                 }
             };
 
@@ -3007,6 +3130,383 @@
                 document.getElementById('speedtestStatusText').textContent = "Error: Status check failed";
                 document.getElementById('speedtestProgressContainer').style.display = 'none';
             }
+        }
+
+        function getIcon(name) {
+            const icons = {
+                "booting": `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"/></svg>`,
+                "stowed": `<svg viewBox="0 0 24 24"><path d="M12 2L1 21H23L12 2M12 6L19.53 19H4.47L12 6M11 10V14H13V10H11M11 16V18H13V16H11Z"/></svg>`,
+                "thermal": `<svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M12 17C11.4 17 11 16.6 11 16V12C11 11.4 11.4 11 12 11S13 11.4 13 12V16C13 16.6 12.6 17 12 17M12 9C11.4 9 11 8.6 11 8S11.4 7 12 7 13 7.4 13 8 12.6 9 12 9Z"/></svg>`,
+                "schedule": `<svg viewBox="0 0 24 24"><path d="M12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20M12 2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11 6H12.5V12L17 14.5L16.2 15.7L11 12.7V6Z"/></svg>`,
+                "no_sats": `<svg viewBox="0 0 24 24"><path d="M12,2C6.47,2 2,6.47 2,12C2,17.53 6.47,22 12,22C17.53,22 22,17.53 22,12C22,6.47 17.53,2 12,2M12,4C13.67,4 15.22,4.66 16.37,5.74L5.74,16.37C4.66,15.22 4,13.67 4,12C4,7.58 7.58,4 12,4M12,20C10.33,20 8.78,19.34 7.63,18.26L18.26,7.63C19.34,8.78 20,10.33 20,12C20,16.42 16.42,20 12,20Z"/></svg>`,
+                "obstructed": `<svg viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12S6.47 22 12 22 22 17.5 22 12 17.5 2 12 2M12 4C13.9 4 15.5 4.9 16.5 6.4L6.4 16.5C4.9 15.5 4 13.9 4 12C4 7.6 7.6 4 12 4M12 20C10.1 20 8.5 19.1 7.5 17.6L17.6 7.5C19.1 8.5 20 10.1 20 12C20 16.4 16.4 20 12 20Z"/></svg>`,
+                "no_downlink": `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,16.5L16.5,11L15,9.5L11,13.5L9,11.5L7.5,13L11,16.5Z"/></svg>`,
+                "no_pings": `<svg viewBox="0 0 24 24"><path d="M2 5.27L3.28 4L20 20.72L18.73 22l-3-3H6c-3.31 0-6-2.69-6-6 0-2.97 2.16-5.43 5-5.91l-3-3h0.01zM19.35 10.04C18.67 6.59 15.64 4 12 4c-2.31 0-4.37 1.05-5.76 2.71L8.3 8.77C9.22 7.67 10.53 7 12 7c2.76 0 5 2.24 5 5v1h2.35c1.46 0 2.65 1.19 2.65 2.65 0 1-.56 1.88-1.39 2.33l1.45 1.45C23.16 18.2 24 16.7 24 15c0-2.64-2.05-4.78-4.65-4.96z"/></svg>`,
+                "sleeping": `<svg viewBox="0 0 24 24"><path d="M9.5,2C9.68,2 9.86,2.08 10,2.21L20.8,11L22,12L20.8,13L10,21.79C9.86,21.92 9.68,22 9.5,22C9.07,22 8.75,21.68 8.75,21.25V2.75C8.75,2.32 9.07,2 9.5,2M10.25,5.25V18.75L18.75,12L10.25,5.25Z"/></svg>`,
+                "sky_search": `<svg viewBox="0 0 24 24"><path d="M12,20A8,8 0 1,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 1,0 22,12A10,10 0 0,0 12,2M12,5.5A1.5,1.5 0 1,1 10.5,7A1.5,1.5 0 0,1 12,5.5M12,10.5A1.5,1.5 0 1,1 10.5,12A1.5,1.5 0 0,1 12,10.5M12,15.5A1.5,1.5 0 1,1 10.5,17A1.5,1.5 0 0,1 12,15.5Z"/></svg>`,
+                "router": `<svg viewBox="0 0 24 24"><path d="M17,17H19V19H17V17M13,17H15V19H13V17M9,17H11V19H9V17M5,17H7V19H5V17M7,3H17V5H7V3M19,7H5C3.89,7 3,7.89 3,9V14C3,15.11 3.89,16 5,16H19C20.11,16 21,15.11 21,14V9C21,7.89 20.11,7 19,7M19,14H5V9H19V14Z"/></svg>`,
+                "settings": `<svg viewBox="0 0 24 24"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.47,5.34 14.86,5.08L14.49,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.51,2.42L9.14,5.08C8.53,5.34 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,13L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.95C7.96,18.34 8.53,18.66 9.14,18.92L9.51,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.49,21.58L14.86,18.92C15.47,18.66 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>`,
+                "update": `<svg viewBox="0 0 24 24"><path d="M21,10.12H14.22L16.96,7.38C15.5,5.91 13.58,5 11.5,5C7.73,5 4.5,7.77 3.65,11.43l-1.93-.43C2.71,6.5 6.7,3 11.5,3c2.72,0 5.23,1.11 7.07,2.93L21,3.2V10.12M12.5,19C16.27,19 19.5,16.23 20.35,12.57l1.93,.43C21.29,17.5 17.3,21 12.5,21c-2.72,0-5.23-1.11-7.07-2.93L3,20.8V13.88H9.78L7.04,16.62C8.5,18.09 10.42,19 12.5,19Z"/></svg>`,
+                "ip": `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,14.36 18.97,16.5 17.3,18C15.93,15.34 13.9,13.62 12,13.62C10.1,13.62 8.07,15.34 6.7,18C5.03,16.5 4,14.36 4,12A8,8 0 0,1 12,4M12,6A3,3 0 0,0 9,9A3,3 0 0,0 12,12A3,3 0 0,0 15,9A3,3 0 0,0 12,6Z"/></svg>`,
+                "wifi": `<svg viewBox="0 0 24 24"><path d="M12,21L15.6,17.4C14.6,16.5 13.3,16 12,16C10.7,16 9.4,16.5 8.4,17.4L12,21M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,14.2 19.1,16.2 17.6,17.7L6.3,6.3C7.8,4.9 9.8,4 12,4Z"/></svg>`,
+                "default": `<svg viewBox="0 0 24 24"><path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/></svg>`
+            };
+            return icons[name] || icons["default"];
+        }
+
+        function getEventReasonInfo(reason, isOutage) {
+            const causeMap = {
+                0: "UNKNOWN",
+                1: "BOOTING",
+                2: "STOWED",
+                3: "THERMAL_SHUTDOWN",
+                4: "NO_SCHEDULE",
+                5: "NO_SATS",
+                6: "OBSTRUCTED",
+                7: "NO_DOWNLINK",
+                8: "NO_PINGS",
+                9: "ACTUATOR_ACTIVITY",
+                10: "CABLE_TEST",
+                11: "SLEEPING",
+                12: "MOVING_WHILE_NOT_MOBILE",
+                13: "NO_DIAGNOSTICS",
+                14: "UNSUPPORTED_HARDWARE",
+                15: "NO_CONFIG"
+            };
+
+            const reasonMap = {
+                0: "EVENT_REASON_UNKNOWN",
+                1: "EVENT_REASON_OUTAGE_UNKNOWN",
+                2: "EVENT_REASON_OUTAGE_BOOTING",
+                3: "EVENT_REASON_OUTAGE_STOWED",
+                4: "EVENT_REASON_OUTAGE_THERMAL_SHUTDOWN",
+                5: "EVENT_REASON_OUTAGE_NO_SCHEDULE",
+                6: "EVENT_REASON_OUTAGE_NO_SATS",
+                7: "EVENT_REASON_OUTAGE_OBSTRUCTED",
+                8: "EVENT_REASON_OUTAGE_NO_DOWNLINK",
+                9: "EVENT_REASON_OUTAGE_NO_PINGS",
+                10: "EVENT_REASON_OUTAGE_SLEEPING",
+                11: "EVENT_REASON_OUTAGE_MOVING_WHILE_NOT_ALLOWED",
+                12: "EVENT_REASON_HIGH_DOWNLINK_PACKET_LOSS",
+                13: "EVENT_REASON_ROUTER_FACTORY_RESET",
+                14: "EVENT_REASON_ROUTER_REBOOT",
+                15: "EVENT_REASON_ROUTER_POWER_CYCLE",
+                16: "EVENT_REASON_ROUTER_CONFIG_UPDATE",
+                17: "EVENT_REASON_ROUTER_SOFTWARE_UPDATE",
+                18: "EVENT_REASON_ROUTER_THERMAL_THROTTLED",
+                19: "EVENT_REASON_OUTAGE_SKY_SEARCH",
+                20: "EVENT_REASON_ROUTER_REBOOT_CONFIG_UPDATE",
+                21: "EVENT_REASON_ROUTER_PUBLIC_IPV4_CHANGE",
+                22: "EVENT_REASON_UT_ALERT_RAIN_SNR_PERSISTENTLY_LOW",
+                23: "EVENT_REASON_UT_ALERT_ETH_NO_LINK",
+                24: "EVENT_REASON_UT_ALERT_ETH_SLOW_LINK",
+                25: "EVENT_REASON_UT_ALERT_ETH_SLOW_LINK_100",
+                26: "EVENT_REASON_ROUTER_POP_IPV4_PING_DROP",
+                27: "EVENT_REASON_ROUTER_POP_IPV6_PING_DROP",
+                28: "EVENT_REASON_ROUTER_LAN_ETH_HIGH_PACKET_LOSS",
+                29: "EVENT_REASON_ROUTER_WAN_ETH_HIGH_PACKET_LOSS",
+                30: "EVENT_REASON_ROUTER_DHCP_SERVER_FAIL_TO_START",
+                31: "EVENT_REASON_ROUTER_DHCP_SERVER_EXHAUSTED",
+                32: "EVENT_REASON_ROUTER_DNS_IPV4_SERVER_FAIL_TO_START",
+                33: "EVENT_REASON_ROUTER_DNS_IPV6_SERVER_FAIL_TO_START",
+                34: "EVENT_REASON_ROUTER_SET_CUSTOM_DNS_DISALLOWED",
+                35: "EVENT_REASON_ROUTER_SET_CUSTOM_DNS_ALLOWED",
+                36: "EVENT_REASON_ROUTER_MAX_WIRELESS_CLIENTS",
+                37: "EVENT_REASON_ROUTER_MAX_5GHIGH_WIRELESS_CLIENTS",
+                38: "EVENT_REASON_ROUTER_MESH_TOPOLOGY_CHANGING_OFTEN",
+                39: "EVENT_REASON_ROUTER_CONNTRACK_FULL",
+                40: "EVENT_REASON_ROUTER_DISH_PING_DROP",
+                41: "EVENT_REASON_ROUTER_UT_CONNECTED_TO_LAN",
+                42: "EVENT_REASON_CLIENT_RECONNECTING_OFTEN",
+                43: "EVENT_REASON_CLIENT_SWITCHING_BAND",
+                44: "EVENT_REASON_CLIENT_SWITCHING_UPSTREAM_MAC",
+                45: "EVENT_REASON_ROUTER_MESH_CONNECTION_CHANGING",
+                46: "EVENT_REASON_MESH_BACKHAUL_LOW_PHY",
+                47: "EVENT_REASON_ROUTER_HIGH_OVERLAPPING_BSS"
+            };
+
+            let clean = reason;
+            if (typeof reason === 'number' || !isNaN(reason)) {
+                const num = Number(reason);
+                if (isOutage) {
+                    clean = causeMap[num] || String(num);
+                } else {
+                    clean = reasonMap[num] || String(num);
+                }
+            }
+
+            clean = String(clean).toUpperCase();
+            clean = clean.replace("EVENT_REASON_OUTAGE_", "").replace("EVENT_REASON_", "");
+
+            const m = {
+                // Dish Outages / Events
+                "UNKNOWN": { label: "Dish: Unknown Outage", type: "info", icon: getIcon('default') },
+                "OUTAGE_UNKNOWN": { label: "Dish: Unknown Outage", type: "info", icon: getIcon('default') },
+                "BOOTING": { label: "Dish: Booting", type: "warning", icon: getIcon('booting') },
+                "STOWED": { label: "Dish: Stowed", type: "warning", icon: getIcon('stowed') },
+                "THERMAL_SHUTDOWN": { label: "Dish: Thermal Shutdown", type: "error", icon: getIcon('thermal') },
+                "NO_SCHEDULE": { label: "Dish: No Schedule", type: "info", icon: getIcon('schedule') },
+                "NO_SATS": { label: "Dish: No Satellites", type: "error", icon: getIcon('no_sats') },
+                "OBSTRUCTED": { label: "Dish: Obstructed", type: "error", icon: getIcon('obstructed') },
+                "NO_DOWNLINK": { label: "Dish: No Downlink", type: "error", icon: getIcon('no_downlink') },
+                "NO_PINGS": { label: "Dish: No Pings (Offline)", type: "error", icon: getIcon('no_pings') },
+                "SLEEPING": { label: "Dish: Sleeping", type: "info", icon: getIcon('sleeping') },
+                "SKY_SEARCH": { label: "Dish: Sky Search", type: "warning", icon: getIcon('sky_search') },
+                "ACTUATOR_ACTIVITY": { label: "Dish: Actuator Activity", type: "warning", icon: getIcon('settings') },
+                "CABLE_TEST": { label: "Dish: Cable Test", type: "warning", icon: getIcon('settings') },
+                "MOVING_WHILE_NOT_MOBILE": { label: "Dish: Moving While Not Allowed", type: "warning", icon: getIcon('settings') },
+                "MOVING_WHILE_NOT_ALLOWED": { label: "Dish: Moving While Not Allowed", type: "warning", icon: getIcon('settings') },
+                "NO_DIAGNOSTICS": { label: "Dish: No Diagnostics", type: "info", icon: getIcon('default') },
+                "UNSUPPORTED_HARDWARE": { label: "Dish: Unsupported Hardware", type: "error", icon: getIcon('default') },
+                "NO_CONFIG": { label: "Dish: No Config", type: "info", icon: getIcon('default') },
+                "HIGH_DOWNLINK_PACKET_LOSS": { label: "Dish: High Downlink Packet Loss", type: "warning", icon: getIcon('default') },
+                "UT_ALERT_RAIN_SNR_PERSISTENTLY_LOW": { label: "Dish: Rain/Low SNR Alert", type: "warning", icon: getIcon('default') },
+                "UT_ALERT_ETH_NO_LINK": { label: "Ethernet: Cable Disconnected", type: "error", icon: getIcon('router') },
+                "UT_ALERT_ETH_SLOW_LINK": { label: "Ethernet: Slow Link (10/100 Mbps)", type: "warning", icon: getIcon('router') },
+                "UT_ALERT_ETH_SLOW_LINK_100": { label: "Ethernet: Slow Link (100 Mbps)", type: "warning", icon: getIcon('router') },
+
+                // Router Events
+                "ROUTER_FACTORY_RESET": { label: "Router: Factory Reset", type: "warning", icon: getIcon('settings') },
+                "ROUTER_REBOOT": { label: "Router: Rebooted", type: "info", icon: getIcon('router') },
+                "ROUTER_POWER_CYCLE": { label: "Router: Power Cycled", type: "info", icon: getIcon('router') },
+                "ROUTER_CONFIG_UPDATE": { label: "Router: Config Updated", type: "info", icon: getIcon('settings') },
+                "ROUTER_SOFTWARE_UPDATE": { label: "Router: Software Updated", type: "info", icon: getIcon('update') },
+                "ROUTER_THERMAL_THROTTLED": { label: "Router: Thermal Throttled", type: "warning", icon: getIcon('thermal') },
+                "ROUTER_REBOOT_CONFIG_UPDATE": { label: "Router: Config Update Reboot", type: "info", icon: getIcon('router') },
+                "ROUTER_PUBLIC_IPV4_CHANGE": { label: "Router: WAN IP Changed", type: "info", icon: getIcon('ip') },
+                "ROUTER_POP_IPV4_PING_DROP": { label: "Router: POP IPv4 Ping Drop", type: "warning", icon: getIcon('no_pings') },
+                "ROUTER_POP_IPV6_PING_DROP": { label: "Router: POP IPv6 Ping Drop", type: "warning", icon: getIcon('no_pings') },
+                "ROUTER_LAN_ETH_HIGH_PACKET_LOSS": { label: "Ethernet: High LAN Packet Loss", type: "warning", icon: getIcon('router') },
+                "ROUTER_WAN_ETH_HIGH_PACKET_LOSS": { label: "Ethernet: High WAN Packet Loss", type: "warning", icon: getIcon('router') },
+                "ROUTER_DHCP_SERVER_FAIL_TO_START": { label: "Router: DHCP Server Error", type: "error", icon: getIcon('settings') },
+                "ROUTER_DHCP_SERVER_EXHAUSTED": { label: "Router: DHCP Pool Exhausted", type: "warning", icon: getIcon('settings') },
+                "ROUTER_DNS_IPV4_SERVER_FAIL_TO_START": { label: "Router: DNS IPv4 Error", type: "error", icon: getIcon('settings') },
+                "ROUTER_DNS_IPV6_SERVER_FAIL_TO_START": { label: "Router: DNS IPv6 Error", type: "error", icon: getIcon('settings') },
+                "ROUTER_MAX_WIRELESS_CLIENTS": { label: "Wi-Fi: Max clients reached", type: "warning", icon: getIcon('wifi') },
+                "ROUTER_MAX_5GHIGH_WIRELESS_CLIENTS": { label: "Wi-Fi: Max 5G-High clients", type: "warning", icon: getIcon('wifi') },
+                "ROUTER_MESH_TOPOLOGY_CHANGING_OFTEN": { label: "Mesh: Topology changing often", type: "warning", icon: getIcon('wifi') },
+                "ROUTER_CONNTRACK_FULL": { label: "Router: Conntrack Table Full", type: "error", icon: getIcon('settings') },
+                "ROUTER_DISH_PING_DROP": { label: "Router: Ping drops to Dish", type: "warning", icon: getIcon('no_pings') },
+                "ROUTER_UT_CONNECTED_TO_LAN": { label: "Router: Dish connected to LAN", type: "info", icon: getIcon('router') },
+                
+                // Wi-Fi / Client Events
+                "CLIENT_RECONNECTING_OFTEN": { label: "Wi-Fi: Client reconnecting often", type: "warning", icon: getIcon('wifi') },
+                "CLIENT_SWITCHING_BAND": { label: "Wi-Fi: Client band switched", type: "info", icon: getIcon('wifi') },
+                "CLIENT_SWITCHING_UPSTREAM_MAC": { label: "Wi-Fi: Client switching upstream AP", type: "info", icon: getIcon('wifi') },
+                "MESH_BACKHAUL_LOW_PHY": { label: "Mesh: Low backhaul link speed", type: "warning", icon: getIcon('wifi') },
+                "ROUTER_HIGH_OVERLAPPING_BSS": { label: "Wi-Fi: High channel overlap", type: "warning", icon: getIcon('wifi') }
+            };
+
+            return m[clean] || { label: clean.replace(/_/g, " "), type: "info", icon: getIcon('default') };
+        }
+
+        function displayEventsAndOutages(outages, activeOutage, dishEvents, routerEvents) {
+            const container = document.getElementById('outagesContainer');
+            if (!container) return;
+
+            // Calculate device time offsets to correct clock skew/unsynced dates
+            const nowMs = Date.now();
+            let dishOffsetMs = 0;
+            let routerOffsetMs = 0;
+
+            try {
+                const dishHistory = getDeepField(appState.history, "dish_get_history") || appState.history;
+                const dishEventLog = dishHistory?.event_log || dishHistory?.eventLog;
+                const dishCurrentTs = dishEventLog?.current_timestamp_ns || dishEventLog?.currentTimestampNs;
+                if (dishCurrentTs && BigInt(dishCurrentTs) > 0n) {
+                    const dishCurrentMs = Number(BigInt(dishCurrentTs) / 1000000n);
+                    dishOffsetMs = nowMs - dishCurrentMs;
+                }
+            } catch (err) {
+                console.error("Error calculating dish time offset:", err);
+            }
+
+            try {
+                const routerHistory = getDeepField(appState.routerHistory, "wifi_get_history") || appState.routerHistory;
+                const routerEventLog = routerHistory?.event_log || routerHistory?.eventLog;
+                const routerCurrentTs = routerEventLog?.current_timestamp_ns || routerEventLog?.currentTimestampNs;
+                if (routerCurrentTs && BigInt(routerCurrentTs) > 0n) {
+                    const routerCurrentMs = Number(BigInt(routerCurrentTs) / 1000000n);
+                    routerOffsetMs = nowMs - routerCurrentMs;
+                }
+            } catch (err) {
+                console.error("Error calculating router time offset:", err);
+            }
+
+            let allEvents = [];
+            const seenKeys = new Set();
+
+            // 1. Process active outage
+            if (activeOutage && activeOutage.start_timestamp_ns) {
+                const tsStr = String(activeOutage.start_timestamp_ns);
+                const key = `active_${tsStr}`;
+                seenKeys.add(key);
+                allEvents.push({
+                    reason: activeOutage.cause,
+                    start_timestamp_ns: activeOutage.start_timestamp_ns,
+                    duration_ns: activeOutage.duration_ns,
+                    isActive: true,
+                    isOutage: true,
+                    offsetMs: dishOffsetMs
+                });
+            }
+
+            // 2. Process historical outages
+            if (outages && outages.length > 0) {
+                outages.forEach(o => {
+                    const tsStr = String(o.start_timestamp_ns);
+                    const key = `outage_${tsStr}`;
+                    if (!seenKeys.has(key)) {
+                        seenKeys.add(key);
+                        allEvents.push({
+                            reason: o.cause,
+                            start_timestamp_ns: o.start_timestamp_ns,
+                            duration_ns: o.duration_ns,
+                            isActive: false,
+                            isOutage: true,
+                            offsetMs: dishOffsetMs
+                        });
+                    }
+                });
+            }
+
+            // 3. Process dish UXEvents
+            if (dishEvents && dishEvents.length > 0) {
+                dishEvents.forEach(e => {
+                    const tsStr = String(e.start_timestamp_ns);
+                    const key = `dishev_${tsStr}_${e.reason}`;
+                    if (!seenKeys.has(key)) {
+                        seenKeys.add(key);
+                        allEvents.push({
+                            reason: e.reason,
+                            start_timestamp_ns: e.start_timestamp_ns,
+                            duration_ns: e.duration_ns,
+                            isActive: false,
+                            isOutage: false,
+                            offsetMs: dishOffsetMs
+                        });
+                    }
+                });
+            }
+
+            // 4. Process router UXEvents
+            if (routerEvents && routerEvents.length > 0) {
+                routerEvents.forEach(e => {
+                    const tsStr = String(e.start_timestamp_ns);
+                    const key = `routerev_${tsStr}_${e.reason}`;
+                    if (!seenKeys.has(key)) {
+                        seenKeys.add(key);
+                        allEvents.push({
+                            reason: e.reason,
+                            start_timestamp_ns: e.start_timestamp_ns,
+                            duration_ns: e.duration_ns,
+                            isActive: false,
+                            isOutage: false,
+                            offsetMs: routerOffsetMs
+                        });
+                    }
+                });
+            }
+
+            // Sort descending by corrected start time
+            allEvents.sort((a, b) => {
+                let aTime = 0n;
+                let bTime = 0n;
+                try {
+                    aTime = BigInt(a.start_timestamp_ns || 0);
+                    if (a.offsetMs) {
+                        aTime += BigInt(a.offsetMs) * 1000000n;
+                    }
+                    bTime = BigInt(b.start_timestamp_ns || 0);
+                    if (b.offsetMs) {
+                        bTime += BigInt(b.offsetMs) * 1000000n;
+                    }
+                } catch(e) {
+                    aTime = BigInt(Number(a.start_timestamp_ns || 0) + (a.offsetMs || 0) * 1000000);
+                    bTime = BigInt(Number(b.start_timestamp_ns || 0) + (b.offsetMs || 0) * 1000000);
+                }
+                return aTime > bTime ? -1 : (aTime < bTime ? 1 : 0);
+            });
+
+            if (allEvents.length === 0) {
+                container.innerHTML = `
+                    <div style="color: var(--text-secondary); text-align: center; padding: 2rem; font-size: 0.95rem;">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: var(--status-green); margin-bottom: 0.5rem; display: block; margin-left: auto; margin-right: auto;"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>
+                        No outages or events recorded
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = "";
+
+            allEvents.forEach(o => {
+                const el = document.createElement('div');
+                const reasonInfo = getEventReasonInfo(o.reason, o.isOutage);
+                
+                // Format start timestamp
+                let startMs = 0;
+                try {
+                    startMs = Number(BigInt(o.start_timestamp_ns) / 1000000n);
+                } catch(e) {
+                    startMs = Number(o.start_timestamp_ns) / 1000000;
+                }
+                // Apply dynamic clock offset correction
+                if (o.offsetMs) {
+                    startMs += o.offsetMs;
+                }
+                const date = new Date(startMs);
+                const timeStr = date.toLocaleString('en-US', { 
+                    month: 'short', 
+                    day: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit',
+                    hour12: false 
+                });
+
+                // Format duration
+                let durationStr = "";
+                if (o.isActive) {
+                    durationStr = `<span class="badge-active-outage">IN PROGRESS</span>`;
+                } else {
+                    let durMs = 0;
+                    try {
+                        durMs = Number(BigInt(o.duration_ns) / 1000000n);
+                    } catch(e) {
+                        durMs = Number(o.duration_ns) / 1000000;
+                    }
+                    const durSec = durMs / 1000;
+                    
+                    if (durMs <= 0) {
+                        durationStr = "";
+                    } else if (durSec < 1) {
+                        durationStr = `${durMs.toFixed(0)} ms`;
+                    } else if (durSec < 60) {
+                        durationStr = `${durSec.toFixed(1)}s`;
+                    } else {
+                        const mins = Math.floor(durSec / 60);
+                        const secs = Math.floor(durSec % 60);
+                        durationStr = `${mins}m ${secs}s`;
+                    }
+                }
+
+                el.className = `outage-item outage-item-${reasonInfo.type}`;
+                if (o.isActive) {
+                    el.classList.add('outage-item-active-pulse');
+                }
+
+                el.innerHTML = `
+                    ${reasonInfo.icon}
+                    <div style="display: flex; flex-direction: column; flex-grow: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                            <span class="outage-cause">${reasonInfo.label}</span>
+                            <span class="outage-duration">${durationStr}</span>
+                        </div>
+                        <span class="outage-time">${timeStr}</span>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
         }
 
     </script>
