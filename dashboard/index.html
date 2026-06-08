@@ -3140,7 +3140,7 @@
                 "schedule": `<svg viewBox="0 0 24 24"><path d="M12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20M12 2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11 6H12.5V12L17 14.5L16.2 15.7L11 12.7V6Z"/></svg>`,
                 "no_sats": `<svg viewBox="0 0 24 24"><path d="M12,2C6.47,2 2,6.47 2,12C2,17.53 6.47,22 12,22C17.53,22 22,17.53 22,12C22,6.47 17.53,2 12,2M12,4C13.67,4 15.22,4.66 16.37,5.74L5.74,16.37C4.66,15.22 4,13.67 4,12C4,7.58 7.58,4 12,4M12,20C10.33,20 8.78,19.34 7.63,18.26L18.26,7.63C19.34,8.78 20,10.33 20,12C20,16.42 16.42,20 12,20Z"/></svg>`,
                 "obstructed": `<svg viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12S6.47 22 12 22 22 17.5 22 12 17.5 2 12 2M12 4C13.9 4 15.5 4.9 16.5 6.4L6.4 16.5C4.9 15.5 4 13.9 4 12C4 7.6 7.6 4 12 4M12 20C10.1 20 8.5 19.1 7.5 17.6L17.6 7.5C19.1 8.5 20 10.1 20 12C20 16.4 16.4 20 12 20Z"/></svg>`,
-                "no_downlink": `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,16.5L16.5,11L15,9.5L11,13.5L9,11.5L7.5,13L11,16.5Z"/></svg>`,
+                "no_downlink": `<svg viewBox="0 0 24 24"><path d="M10,3H14V9L16,7V9.7L14.7,11L12.3,8.6L10,6.3V3M21.19,21.19L19.78,22.6L16,18.8V21H8V15.7L2.81,10.51L4.22,9.1L21.19,21.19M14,14.8V19H10V14.8L14,14.8Z"/></svg>`,
                 "no_pings": `<svg viewBox="0 0 24 24"><path d="M2 5.27L3.28 4L20 20.72L18.73 22l-3-3H6c-3.31 0-6-2.69-6-6 0-2.97 2.16-5.43 5-5.91l-3-3h0.01zM19.35 10.04C18.67 6.59 15.64 4 12 4c-2.31 0-4.37 1.05-5.76 2.71L8.3 8.77C9.22 7.67 10.53 7 12 7c2.76 0 5 2.24 5 5v1h2.35c1.46 0 2.65 1.19 2.65 2.65 0 1-.56 1.88-1.39 2.33l1.45 1.45C23.16 18.2 24 16.7 24 15c0-2.64-2.05-4.78-4.65-4.96z"/></svg>`,
                 "sleeping": `<svg viewBox="0 0 24 24"><path d="M9.5,2C9.68,2 9.86,2.08 10,2.21L20.8,11L22,12L20.8,13L10,21.79C9.86,21.92 9.68,22 9.5,22C9.07,22 8.75,21.68 8.75,21.25V2.75C8.75,2.32 9.07,2 9.5,2M10.25,5.25V18.75L18.75,12L10.25,5.25Z"/></svg>`,
                 "sky_search": `<svg viewBox="0 0 24 24"><path d="M12,20A8,8 0 1,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 1,0 22,12A10,10 0 0,0 12,2M12,5.5A1.5,1.5 0 1,1 10.5,7A1.5,1.5 0 0,1 12,5.5M12,10.5A1.5,1.5 0 1,1 10.5,12A1.5,1.5 0 0,1 12,10.5M12,15.5A1.5,1.5 0 1,1 10.5,17A1.5,1.5 0 0,1 12,15.5Z"/></svg>`,
@@ -3373,14 +3373,16 @@
             // 3. Process dish UXEvents
             if (dishEvents && dishEvents.length > 0) {
                 dishEvents.forEach(e => {
-                    const tsStr = String(e.start_timestamp_ns);
+                    const startTs = e.start_timestamp_ns || e.startTimestampNs;
+                    const durationTs = e.duration_ns || e.durationNs;
+                    const tsStr = String(startTs);
                     const key = `dishev_${tsStr}_${e.reason}`;
                     if (!seenKeys.has(key)) {
                         seenKeys.add(key);
                         allEvents.push({
                             reason: e.reason,
-                            start_timestamp_ns: e.start_timestamp_ns,
-                            duration_ns: e.duration_ns,
+                            start_timestamp_ns: startTs,
+                            duration_ns: durationTs,
                             isActive: false,
                             isOutage: false,
                             offsetMs: dishOffsetMs
@@ -3392,14 +3394,16 @@
             // 4. Process router UXEvents
             if (routerEvents && routerEvents.length > 0) {
                 routerEvents.forEach(e => {
-                    const tsStr = String(e.start_timestamp_ns);
+                    const startTs = e.start_timestamp_ns || e.startTimestampNs;
+                    const durationTs = e.duration_ns || e.durationNs;
+                    const tsStr = String(startTs);
                     const key = `routerev_${tsStr}_${e.reason}`;
                     if (!seenKeys.has(key)) {
                         seenKeys.add(key);
                         allEvents.push({
                             reason: e.reason,
-                            start_timestamp_ns: e.start_timestamp_ns,
-                            duration_ns: e.duration_ns,
+                            start_timestamp_ns: startTs,
+                            duration_ns: durationTs,
                             isActive: false,
                             isOutage: false,
                             offsetMs: routerOffsetMs
@@ -3413,17 +3417,21 @@
                 let aTime = 0n;
                 let bTime = 0n;
                 try {
-                    aTime = BigInt(a.start_timestamp_ns || 0);
+                    const aTs = a.start_timestamp_ns || 0;
+                    aTime = BigInt(aTs);
                     if (a.offsetMs) {
                         aTime += BigInt(a.offsetMs) * 1000000n;
                     }
-                    bTime = BigInt(b.start_timestamp_ns || 0);
+                    const bTs = b.start_timestamp_ns || 0;
+                    bTime = BigInt(bTs);
                     if (b.offsetMs) {
                         bTime += BigInt(b.offsetMs) * 1000000n;
                     }
                 } catch(e) {
-                    aTime = BigInt(Number(a.start_timestamp_ns || 0) + (a.offsetMs || 0) * 1000000);
-                    bTime = BigInt(Number(b.start_timestamp_ns || 0) + (b.offsetMs || 0) * 1000000);
+                    const aTs = Number(a.start_timestamp_ns || 0);
+                    const bTs = Number(b.start_timestamp_ns || 0);
+                    aTime = BigInt(aTs + (a.offsetMs || 0) * 1000000);
+                    bTime = BigInt(bTs + (b.offsetMs || 0) * 1000000);
                 }
                 return aTime > bTime ? -1 : (aTime < bTime ? 1 : 0);
             });
@@ -3445,24 +3453,31 @@
                 
                 // Format start timestamp
                 let startMs = 0;
-                try {
-                    startMs = Number(BigInt(o.start_timestamp_ns) / 1000000n);
-                } catch(e) {
-                    startMs = Number(o.start_timestamp_ns) / 1000000;
+                const rawStart = o.start_timestamp_ns;
+                if (rawStart) {
+                    try {
+                        startMs = Number(BigInt(rawStart) / 1000000n);
+                    } catch(e) {
+                        startMs = Number(rawStart) / 1000000;
+                    }
                 }
-                // Apply dynamic clock offset correction
-                if (o.offsetMs) {
-                    startMs += o.offsetMs;
+                
+                let timeStr = "--";
+                if (startMs && !isNaN(startMs)) {
+                    // Apply dynamic clock offset correction
+                    if (o.offsetMs) {
+                        startMs += o.offsetMs;
+                    }
+                    const date = new Date(startMs);
+                    timeStr = date.toLocaleString('en-US', { 
+                        month: 'short', 
+                        day: '2-digit', 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        second: '2-digit',
+                        hour12: false 
+                    });
                 }
-                const date = new Date(startMs);
-                const timeStr = date.toLocaleString('en-US', { 
-                    month: 'short', 
-                    day: '2-digit', 
-                    hour: '2-digit', 
-                    minute: '2-digit', 
-                    second: '2-digit',
-                    hour12: false 
-                });
 
                 // Format duration
                 let durationStr = "";
@@ -3470,23 +3485,31 @@
                     durationStr = `<span class="badge-active-outage">IN PROGRESS</span>`;
                 } else {
                     let durMs = 0;
-                    try {
-                        durMs = Number(BigInt(o.duration_ns) / 1000000n);
-                    } catch(e) {
-                        durMs = Number(o.duration_ns) / 1000000;
+                    let hasDuration = false;
+                    const rawDur = o.duration_ns;
+                    if (rawDur !== undefined && rawDur !== null && rawDur !== "") {
+                        try {
+                            durMs = Number(BigInt(rawDur) / 1000000n);
+                            hasDuration = !isNaN(durMs) && durMs > 0;
+                        } catch(e) {
+                            durMs = Number(rawDur) / 1000000;
+                            hasDuration = !isNaN(durMs) && durMs > 0;
+                        }
                     }
-                    const durSec = durMs / 1000;
                     
-                    if (durMs <= 0) {
+                    if (!hasDuration) {
                         durationStr = "";
-                    } else if (durSec < 1) {
-                        durationStr = `${durMs.toFixed(0)} ms`;
-                    } else if (durSec < 60) {
-                        durationStr = `${durSec.toFixed(1)}s`;
                     } else {
-                        const mins = Math.floor(durSec / 60);
-                        const secs = Math.floor(durSec % 60);
-                        durationStr = `${mins}m ${secs}s`;
+                        const durSec = durMs / 1000;
+                        if (durSec < 1) {
+                            durationStr = `${durMs.toFixed(0)} ms`;
+                        } else if (durSec < 60) {
+                            durationStr = `${durSec.toFixed(1)}s`;
+                        } else {
+                            const mins = Math.floor(durSec / 60);
+                            const secs = Math.floor(durSec % 60);
+                            durationStr = `${mins}m ${secs}s`;
+                        }
                     }
                 }
 

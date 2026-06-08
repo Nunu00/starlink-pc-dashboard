@@ -105,18 +105,19 @@ class StarlinkBridge:
             return {"reachable": True, "data": resp}
 
         if self.use_mock:
-            # Dynamically compute timestamps relative to now so they always appear fresh
+            # Anchor mock timestamps to uptime_start so they remain stable across polls
+            ref_time = mock_data["uptime_start"]
             now = time.time()
             mock_outages = [
                 {
                     "cause": "OBSTRUCTED",
-                    "start_timestamp_ns": str(int((now - 3600) * 1000000000)),
+                    "start_timestamp_ns": str(int((ref_time - 3600) * 1000000000)),
                     "duration_ns": str(15 * 1000000000),
                     "did_switch": False
                 },
                 {
                     "cause": "NO_SATS",
-                    "start_timestamp_ns": str(int((now - 1800) * 1000000000)),
+                    "start_timestamp_ns": str(int((ref_time - 1800) * 1000000000)),
                     "duration_ns": str(8 * 1000000000),
                     "did_switch": False
                 }
@@ -146,7 +147,7 @@ class StarlinkBridge:
                                 {
                                     "severity": "EVENT_SEVERITY_WARNING",
                                     "reason": "EVENT_REASON_UT_ALERT_ETH_SLOW_LINK",
-                                    "start_timestamp_ns": str(int((now - 7200) * 1000000000)),
+                                    "start_timestamp_ns": str(int((ref_time - 7200) * 1000000000)),
                                     "duration_ns": str(0)
                                 }
                             ]
@@ -167,24 +168,25 @@ class StarlinkBridge:
         return {"reachable": False, "data": None}
 
     def get_mock_router_history(self):
+        ref_time = mock_data["uptime_start"]
         now = time.time()
         events = [
             {
                 "severity": "EVENT_SEVERITY_WARNING",
                 "reason": "EVENT_REASON_CLIENT_RECONNECTING_OFTEN",
-                "start_timestamp_ns": str(int((now - 4000) * 1000000000)),
+                "start_timestamp_ns": str(int((ref_time - 4000) * 1000000000)),
                 "duration_ns": str(120 * 1000000000)
             },
             {
                 "severity": "EVENT_SEVERITY_ADVISORY",
                 "reason": "EVENT_REASON_CLIENT_SWITCHING_BAND",
-                "start_timestamp_ns": str(int((now - 2000) * 1000000000)),
+                "start_timestamp_ns": str(int((ref_time - 2000) * 1000000000)),
                 "duration_ns": str(5 * 1000000000)
             },
             {
                 "severity": "EVENT_SEVERITY_WARNING",
                 "reason": "EVENT_REASON_ROUTER_HIGH_OVERLAPPING_BSS",
-                "start_timestamp_ns": str(int((now - 800) * 1000000000)),
+                "start_timestamp_ns": str(int((ref_time - 800) * 1000000000)),
                 "duration_ns": str(30 * 1000000000)
             }
         ]
