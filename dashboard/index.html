@@ -945,7 +945,7 @@
                 Overview
             </div>
             <div class="nav-item" data-tab="dishTab">
-                <svg viewBox="0 0 24 24"><path d="M12,2A3,3 0 0,0 9,5C9,6.24 9.76,7.3 10.83,7.73L10.2,18H8V20H16V18H13.8L13.17,7.73C14.24,7.3 15,6.24 15,5A3,3 0 0,0 12,2M12,4A1,1 0 0,1 13,5A1,1 0 0,1 12,6A1,1 0 0,1 11,5A1,1 0 0,1 12,4M5.64,6.05L7.05,7.46C8.21,6.3 9.71,5.64 11.36,5.5V3.5C9.18,3.64 7.21,4.5 5.64,6.05M18.36,6.05C16.79,4.5 14.82,3.64 12.64,3.5V5.5C14.29,5.64 15.79,6.3 16.95,7.46L18.36,6.05M3.5,9.14L4.91,10.55C6.73,8.73 9.23,7.64 12,7.5V5.5C8.68,5.64 5.73,6.97 3.5,9.14M20.5,9.14C18.27,6.97 15.32,5.64 12,5.5V7.5C14.77,7.64 17.27,8.73 19.09,10.55L20.5,9.14Z"/></svg>
+                <svg viewBox="0 0 512 512"><path d="M305.44954,462.59c7.39157,7.29792,6.18829,20.09661-3.00038,25.00356-77.713,41.80281-176.72559,29.9105-242.34331-35.7082C-5.49624,386.28227-17.404,287.362,24.41381,209.554c4.89125-9.095,17.68975-10.29834,25.00318-3.00043L166.22872,323.36708l27.39411-27.39452c-.68759-2.60974-1.594-5.00071-1.594-7.81361a32.00407,32.00407,0,1,1,32.00407,32.00455c-2.79723,0-5.20378-.89075-7.79786-1.594l-27.40974,27.41015ZM511.9758,303.06732a16.10336,16.10336,0,0,1-16.002,17.00242H463.86031a15.96956,15.96956,0,0,1-15.89265-15.00213C440.46671,175.5492,336.45348,70.53427,207.03078,63.53328a15.84486,15.84486,0,0,1-15.00191-15.90852V16.02652A16.09389,16.09389,0,0,1,209.031.02425C372.25491,8.61922,503.47472,139.841,511.9758,303.06732Zm-96.01221-.29692a16.21093,16.21093,0,0,1-16.11142,17.29934H367.645a16.06862,16.06862,0,0,1-15.89265-14.70522c-6.90712-77.01094-68.118-138.91037-144.92467-145.22376a15.94,15.94,0,0,1-14.79876-15.89289V112.13393a16.134,16.134,0,0,1,17.29908-16.096C319.45132,104.5391,407.55627,192.64538,415.96359,302.7704Z"/></svg>
                 Dish Details
             </div>
             <div class="nav-item" data-tab="routerTab">
@@ -3305,6 +3305,20 @@
             return m[clean] || { label: clean.replace(/_/g, " "), type: "info", icon: fallbackIcon };
         }
 
+        function resolveClientName(clientId) {
+            if (clientId === undefined || clientId === null) return "";
+            if (appState.clients && appState.clients.length > 0) {
+                const foundClient = appState.clients.find(c => {
+                    const cId = c.client_id !== undefined ? c.client_id : c.clientId;
+                    return String(cId) === String(clientId);
+                });
+                if (foundClient) {
+                    return foundClient.given_name || foundClient.givenName || foundClient.name || foundClient.ip_address || foundClient.ipAddress || foundClient.mac_address || foundClient.macAddress || `Client ${clientId}`;
+                }
+            }
+            return `Client ${clientId}`;
+        }
+
         function displayEventsAndOutages(outages, activeOutage, dishEvents, routerEvents) {
             const container = document.getElementById('outagesContainer');
             if (!container) return;
@@ -3390,7 +3404,8 @@
                             duration_ns: durationTs,
                             isActive: false,
                             isOutage: false,
-                            offsetMs: dishOffsetMs
+                            offsetMs: dishOffsetMs,
+                            rawEvent: e
                         });
                     }
                 });
@@ -3411,7 +3426,8 @@
                             duration_ns: durationTs,
                             isActive: false,
                             isOutage: false,
-                            offsetMs: routerOffsetMs
+                            offsetMs: routerOffsetMs,
+                            rawEvent: e
                         });
                     }
                 });
@@ -3456,6 +3472,52 @@
                 const el = document.createElement('div');
                 const reasonInfo = getEventReasonInfo(o.reason, o.isOutage);
                 
+                let eventLabel = reasonInfo.label;
+                if (o.rawEvent) {
+                    const e = o.rawEvent;
+                    const reasonStr = String(o.reason);
+                    
+                    if (reasonStr.includes("CLIENT_SWITCHING_BAND") || reasonStr === "43") {
+                        const bandMeta = e.client_switching_band_metadata || e.clientSwitchingBandMetadata;
+                        if (bandMeta) {
+                            const clientId = bandMeta.clientId !== undefined ? bandMeta.clientId : bandMeta.client_id;
+                            const clientName = esc(resolveClientName(clientId));
+                            const fromBand = bandMeta.fromBand || bandMeta.from_band || "";
+                            const toBand = bandMeta.toBand || bandMeta.to_band || "";
+                            const mapBand = (b) => {
+                                if (!b) return "";
+                                b = String(b).toUpperCase();
+                                if (b.includes("2GHZ") || b.includes("2.4GHZ") || b.includes("2G")) return "2.4 GHz";
+                                if (b.includes("5GHIGH") || b.includes("5G_HIGH")) return "5 GHz High";
+                                if (b.includes("5GHZ") || b.includes("5G")) return "5 GHz";
+                                if (b.includes("6GHZ") || b.includes("6G")) return "6 GHz";
+                                return b.replace("RF_", "").replace("_", " ");
+                            };
+                            const fromStr = mapBand(fromBand);
+                            const toStr = mapBand(toBand);
+                            if (fromStr && toStr) {
+                                eventLabel = `Wi-Fi: ${clientName} band switched (${fromStr} ➡️ ${toStr})`;
+                            } else {
+                                eventLabel = `Wi-Fi: ${clientName} band switched`;
+                            }
+                        }
+                    } else if (reasonStr.includes("CLIENT_RECONNECTING_OFTEN") || reasonStr === "42") {
+                        const recMeta = e.client_reconnecting_often_metadata || e.clientReconnectingOftenMetadata;
+                        if (recMeta) {
+                            const clientId = recMeta.clientId !== undefined ? recMeta.clientId : recMeta.client_id;
+                            const clientName = esc(resolveClientName(clientId));
+                            eventLabel = `Wi-Fi: ${clientName} reconnecting often`;
+                        }
+                    } else if (reasonStr.includes("CLIENT_SWITCHING_UPSTREAM_MAC") || reasonStr === "44") {
+                        const upMeta = e.client_switching_upstream_mac_metadata || e.clientSwitchingUpstreamMacMetadata;
+                        if (upMeta) {
+                            const clientId = upMeta.clientId !== undefined ? upMeta.clientId : upMeta.client_id;
+                            const clientName = esc(resolveClientName(clientId));
+                            eventLabel = `Wi-Fi: ${clientName} switching upstream AP`;
+                        }
+                    }
+                }
+
                 // Format start timestamp
                 let startMs = 0;
                 const rawStart = o.start_timestamp_ns;
@@ -3526,7 +3588,7 @@
                     ${reasonInfo.icon}
                     <div style="display: flex; flex-direction: column; flex-grow: 1;">
                         <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
-                            <span class="outage-cause">${reasonInfo.label}</span>
+                            <span class="outage-cause">${eventLabel}</span>
                             <span class="outage-duration">${durationStr}</span>
                         </div>
                         <span class="outage-time">${timeStr}</span>

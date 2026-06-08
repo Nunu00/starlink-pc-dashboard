@@ -32,9 +32,9 @@ mock_data = {
     "throughput_up": 15.2,
     "obstruction_map": None,
     "clients": [
-        {"mac_address": "12:34:56:78:9a:bc", "ip_address": "192.168.1.50", "given_name": "PC-Vincenzo", "snr": 0.0, "iface": "ETH"},
-        {"mac_address": "fe:dc:ba:98:76:54", "ip_address": "192.168.1.102", "given_name": "Smartphone-User", "snr": 38.0, "iface": "RF_5GHZ"},
-        {"mac_address": "8c:1d:e2:34:56:78", "ip_address": "192.168.1.105", "given_name": "Smart-TV", "snr": 25.0, "iface": "RF_2GHZ"}
+        {"mac_address": "12:34:56:78:9a:bc", "ip_address": "192.168.1.50", "given_name": "PC-Vincenzo", "snr": 0.0, "iface": "ETH", "client_id": 1001},
+        {"mac_address": "fe:dc:ba:98:76:54", "ip_address": "192.168.1.102", "given_name": "Smartphone-User", "snr": 38.0, "iface": "RF_5GHZ", "client_id": 1002},
+        {"mac_address": "8c:1d:e2:34:56:78", "ip_address": "192.168.1.105", "given_name": "Smart-TV", "snr": 25.0, "iface": "RF_2GHZ", "client_id": 1003}
     ],
     "historical_outages": [],
     "active_outage": None
@@ -175,13 +175,21 @@ class StarlinkBridge:
                 "severity": "EVENT_SEVERITY_WARNING",
                 "reason": "EVENT_REASON_CLIENT_RECONNECTING_OFTEN",
                 "start_timestamp_ns": str(int((ref_time - 4000) * 1000000000)),
-                "duration_ns": str(120 * 1000000000)
+                "duration_ns": str(120 * 1000000000),
+                "client_reconnecting_often_metadata": {
+                    "clientId": 1002
+                }
             },
             {
                 "severity": "EVENT_SEVERITY_ADVISORY",
                 "reason": "EVENT_REASON_CLIENT_SWITCHING_BAND",
                 "start_timestamp_ns": str(int((ref_time - 2000) * 1000000000)),
-                "duration_ns": str(5 * 1000000000)
+                "duration_ns": str(5 * 1000000000),
+                "client_switching_band_metadata": {
+                    "clientId": 1002,
+                    "fromBand": "RF_2GHZ",
+                    "toBand": "RF_5GHZ"
+                }
             },
             {
                 "severity": "EVENT_SEVERITY_WARNING",
